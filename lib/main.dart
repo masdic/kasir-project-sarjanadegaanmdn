@@ -1,6 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:kasir_pos/assets/coconut_image.dart';
+
+import 'screens/cashier_pos_screen.dart';
 
 void main() {
   runApp(const KasirPinApp());
@@ -15,10 +18,7 @@ class KasirPinApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kasir POS Sarjana Degan Madiun',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-      ),
+      theme: ThemeData(useMaterial3: true, fontFamily: 'Roboto'),
       home: const PinLoginScreen(),
     );
   }
@@ -69,8 +69,18 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   String _formatDateTime(DateTime dt) {
     const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     final dayName = days[dt.weekday - 1];
     final day = dt.day.toString();
@@ -155,12 +165,12 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     if (_isOwnerMode) {
       if (_enteredPin == '8888') {
         isValid = true;
-        greeting = 'Selamat datang, Pemilik Usaha (Dicky). Kontrol penuh aktif.';
+        greeting =
+            'Selamat datang, Pemilik Usaha (Dicky). Kontrol penuh aktif.';
       } else if (_enteredPin == '1234' || _enteredPin == '5678') {
         setState(() {
           _isError = true;
-          _errorMessage =
-              'Ini adalah PIN Kasir. Silakan beralih ke tab Cabang 1 atau Cabang 2.';
+          _errorMessage = 'Ini adalah PIN Kasir. Silakan beralih ke tab Cabang 1 atau Cabang 2.';
         });
         _scheduleAutoReset();
         return;
@@ -168,7 +178,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     } else if (_selectedRole == 'Cabang 1') {
       if (_enteredPin == '1234') {
         isValid = true;
-        greeting = 'Berhasil! Selamat bertugas Kasir Cabang 1 (Shift $_selectedShift).';
+        greeting =
+            'Berhasil! Selamat bertugas Kasir Cabang 1 (Shift $_selectedShift).';
       } else if (_enteredPin == '5678') {
         setState(() {
           _isError = true;
@@ -184,7 +195,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     } else if (_selectedRole == 'Cabang 2') {
       if (_enteredPin == '5678') {
         isValid = true;
-        greeting = 'Berhasil! Selamat bertugas Kasir Cabang 2 (Shift $_selectedShift).';
+        greeting =
+            'Berhasil! Selamat bertugas Kasir Cabang 2 (Shift $_selectedShift).';
       } else if (_enteredPin == '1234') {
         setState(() {
           _isError = true;
@@ -210,14 +222,31 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
           ),
           backgroundColor: const Color(0xFF15803D),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
           margin: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           duration: const Duration(seconds: 2),
         ),
       );
 
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) setState(() => _enteredPin = '');
+      final branch = _selectedRole;
+      final shift = _selectedShift;
+      final isOwner = _isOwnerMode;
+
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        setState(() => _enteredPin = '');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CashierPosScreen(
+              branchName: branch,
+              shiftName: shift,
+              isOwner: isOwner,
+            ),
+          ),
+        );
       });
     } else {
       setState(() {
@@ -244,7 +273,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
         title: Row(
           children: [
             Container(
@@ -330,7 +361,10 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFF15803D),
             ),
-            child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Tutup',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -345,7 +379,10 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 20.0,
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 410.0),
               child: Container(
@@ -387,7 +424,12 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
 
                       // 2. Konten Login Form dengan Komponen Rounded Pill
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 24.0),
+                        padding: const EdgeInsets.fromLTRB(
+                          24.0,
+                          0.0,
+                          24.0,
+                          24.0,
+                        ),
                         child: Column(
                           children: [
                             // Jam Realtime
@@ -409,7 +451,10 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                                 onTap: _showHelpDialog,
                                 borderRadius: BorderRadius.circular(8.0),
                                 child: const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 4.0,
+                                    vertical: 4.0,
+                                  ),
                                   child: Text(
                                     'Forgot Password / Lupa PIN?',
                                     style: TextStyle(
@@ -427,11 +472,16 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                             if (_errorMessage != null) ...[
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14.0,
+                                  vertical: 6.0,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.red.shade50.withOpacity(0.95),
                                   borderRadius: BorderRadius.circular(16.0),
-                                  border: Border.all(color: Colors.red.shade300),
+                                  border: Border.all(
+                                    color: Colors.red.shade300,
+                                  ),
                                 ),
                                 child: Text(
                                   _errorMessage!,
@@ -467,8 +517,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                               _isOwnerMode
                                   ? 'Default PIN Master: 8888'
                                   : (_selectedRole == 'Cabang 1'
-                                      ? 'Default PIN Cabang 1: 1234'
-                                      : 'Default PIN Cabang 2: 5678'),
+                                        ? 'Default PIN Cabang 1: 1234'
+                                        : 'Default PIN Cabang 2: 5678'),
                               style: const TextStyle(
                                 fontSize: 11.0,
                                 fontWeight: FontWeight.w600,
@@ -509,7 +559,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
         ],
       ),
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(30.0),
+        ),
         child: SizedBox(
           height: 205.0,
           width: double.infinity,
@@ -565,11 +617,17 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                     ),
                     const SizedBox(height: 3.0),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10.0,
+                        vertical: 2.0,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.22),
                         borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: Colors.white.withOpacity(0.35), width: 0.8),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.35),
+                          width: 0.8,
+                        ),
                       ),
                       child: const Text(
                         'Madiun',
@@ -617,7 +675,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
               height: 7.0,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _isOwnerMode ? const Color(0xFFD97706) : const Color(0xFF16A34A),
+                color: _isOwnerMode
+                    ? const Color(0xFFD97706)
+                    : const Color(0xFF16A34A),
               ),
             ),
             const SizedBox(width: 7.0),
@@ -743,7 +803,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
               style: TextStyle(
                 fontSize: 9.5,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFF94A3B8),
+                color: isSelected
+                    ? const Color(0xFFDCFCE7)
+                    : const Color(0xFF94A3B8),
               ),
             ),
           ],
@@ -779,7 +841,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
           Expanded(
             child: _enteredPin.isEmpty
                 ? Text(
-                    _isOwnerMode ? 'Ketik PIN Master Owner...' : 'Ketik 4 digit PIN Kasir...',
+                    _isOwnerMode
+                        ? 'Ketik PIN Master Owner...'
+                        : 'Ketik 4 digit PIN Kasir...',
                     style: const TextStyle(
                       color: Color(0xFF94A3B8),
                       fontSize: 13.5,
@@ -796,7 +860,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: isFilled
-                              ? (_isError ? Colors.red : const Color(0xFF16A34A))
+                              ? (_isError
+                                    ? Colors.red
+                                    : const Color(0xFF16A34A))
                               : const Color(0xFFE2E8F0),
                         ),
                       );
@@ -998,12 +1064,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   Widget _buildOrContinueWithSection() {
     return Row(
       children: const [
-        Expanded(
-          child: Divider(
-            color: Color(0xFF166534),
-            thickness: 0.8,
-          ),
-        ),
+        Expanded(child: Divider(color: Color(0xFF166534), thickness: 0.8)),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12.0),
           child: Text(
@@ -1015,12 +1076,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
             ),
           ),
         ),
-        Expanded(
-          child: Divider(
-            color: Color(0xFF166534),
-            thickness: 0.8,
-          ),
-        ),
+        Expanded(child: Divider(color: Color(0xFF166534), thickness: 0.8)),
       ],
     );
   }
@@ -1055,7 +1111,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   Icon(
                     Icons.wb_sunny_outlined,
                     size: 16.0,
-                    color: _selectedShift == 'Pagi' ? Colors.white : const Color(0xFFD97706),
+                    color: _selectedShift == 'Pagi'
+                        ? Colors.white
+                        : const Color(0xFFD97706),
                   ),
                   const SizedBox(width: 8.0),
                   Text(
@@ -1063,7 +1121,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                     style: TextStyle(
                       fontSize: 12.0,
                       fontWeight: FontWeight.w700,
-                      color: _selectedShift == 'Pagi' ? Colors.white : const Color(0xFF334155),
+                      color: _selectedShift == 'Pagi'
+                          ? Colors.white
+                          : const Color(0xFF334155),
                     ),
                   ),
                 ],
@@ -1099,7 +1159,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   Icon(
                     Icons.nightlight_outlined,
                     size: 16.0,
-                    color: _selectedShift == 'Sore' ? Colors.white : const Color(0xFF4F46E5),
+                    color: _selectedShift == 'Sore'
+                        ? Colors.white
+                        : const Color(0xFF4F46E5),
                   ),
                   const SizedBox(width: 8.0),
                   Text(
@@ -1107,7 +1169,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                     style: TextStyle(
                       fontSize: 12.0,
                       fontWeight: FontWeight.w700,
-                      color: _selectedShift == 'Sore' ? Colors.white : const Color(0xFF334155),
+                      color: _selectedShift == 'Sore'
+                          ? Colors.white
+                          : const Color(0xFF334155),
                     ),
                   ),
                 ],
@@ -1149,7 +1213,11 @@ class CoconutArtPainter extends CustomPainter {
     final shadowPaint = Paint()
       ..color = Colors.black26
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    canvas.drawCircle(coconutCenter.translate(0, 8), coconutRadius, shadowPaint);
+    canvas.drawCircle(
+      coconutCenter.translate(0, 8),
+      coconutRadius,
+      shadowPaint,
+    );
 
     // Gradasi kulit kelapa muda segar
     final coconutGradient = RadialGradient(
@@ -1216,11 +1284,7 @@ class CoconutArtPainter extends CustomPainter {
 
     final leftCoconutGradient = RadialGradient(
       center: const Alignment(-0.3, -0.3),
-      colors: const [
-        Color(0xFF4ADE80),
-        Color(0xFF16A34A),
-        Color(0xFF14532D),
-      ],
+      colors: const [Color(0xFF4ADE80), Color(0xFF16A34A), Color(0xFF14532D)],
     );
     final leftPaint = Paint()
       ..shader = leftCoconutGradient.createShader(
