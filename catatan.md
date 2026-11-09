@@ -19,6 +19,7 @@
 | 8 | **Input PIN & Keypad Kasir** | Kapsul input PIN 4-dot, tombol Login hijau khas referensi, serta keypad numerik sentuh responsif | ✅ Selesai |
 | 9 | **Shift & Bantuan Darurat** | Tombol kapsul **Shift Pagi (08:00-15:00)** & **Shift Sore (15:00-22:00)**, serta pop-up kontak bantuan Supervisor Dicky | ✅ Selesai |
 | 10 | **Live Preview Port 5000** | Server Flutter Web berjalan lancar di `http://localhost:5000` | ✅ Aktif |
+| 11 | **GitHub Repository** | Repositori resmi tersinkronisasi di `https://github.com/masdic/kasir-project-sarjanadegaanmdn` (branch `main`) | ✅ Selesai |
 
 ---
 
