@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Tugas-1: Analisis Kebutuhan Mobile POS - Sarjana Degan Madiun</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 14mm 12mm 14mm 12mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.55;
+      font-size: 10pt;
+      margin: 0;
+      padding: 0;
+    }
+
+    .page {
+      page-break-after: always;
+      position: relative;
+      min-height: 98vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page:last-child {
+      page-break-after: avoid;
+    }
+
+    /* Magazine Header Bar */
+    .mag-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 6px;
+      margin-bottom: 16px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #047857;
+    }
+
+    .mag-topbar .meta-right {
+      color: #64748b;
+    }
+
+    /* Magazine Cover / Hero Header */
+    .hero-banner {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 45%, #0f172a 100%);
+      color: #ffffff;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(6, 78, 59, 0.18);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-banner::after {
+      content: "";
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .badge-subcpmk {
+      display: inline-block;
+      background: #10b981;
+      color: #ffffff;
+      font-size: 7.5pt;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 21pt;
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 0 0 8px 0;
+      color: #ffffff;
+    }
+
+    .hero-subtitle {
+      font-size: 10.5pt;
+      color: #a7f3d0;
+      font-weight: 500;
+      margin: 0 0 14px 0;
+    }
+
+    .hero-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 8pt;
+    }
+
+    .hero-meta-item strong {
+      display: block;
+      color: #6ee7b7;
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Section Headers */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 18px 0 12px 0;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .section-num {
+      background: #047857;
+      color: #ffffff;
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: 9pt;
+      font-weight: 800;
+    }
+
+    /* Magazine Grid Column Layout */
+    .col-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .col-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    /* Cards */
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .card.accent {
+      border-left: 4px solid #059669;
+      background: #f0fdf4;
+    }
+
+    .card.warning {
+      border-left: 4px solid #dc2626;
+      background: #fef2f2;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 9.5pt;
+      margin-bottom: 6px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Stat Highlight Cards */
+    .stat-box {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .stat-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18pt;
+      font-weight: 700;
+      color: #047857;
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
+
+    .stat-number.red {
+      color: #b91c1c;
+    }
+
+    .stat-label {
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      margin: 8px 0 12px 0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    th {
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 700;
+      text-align: left;
+      padding: 7px 10px;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    /* Flowchart Visual Box */
+    .flowchart-wrapper {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 14px;
+      margin: 10px 0;
+    }
+
+    .flow-step {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      position: relative;
+    }
+
+    .flow-step.danger {
+      border-color: #fca5a5;
+      background: #fff1f2;
+    }
+
+    .flow-step.success {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+
+    .flow-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7.5pt;
+      font-weight: 800;
+      color: #ffffff;
+      background: #64748b;
+      flex-shrink: 0;
+    }
+
+    .flow-step.danger .flow-badge {
+      background: #dc2626;
+    }
+
+    .flow-step.success .flow-badge {
+      background: #16a34a;
+    }
+
+    .flow-text {
+      font-size: 8.5pt;
+      flex-grow: 1;
+    }
+
+    .flow-text strong {
+      display: block;
+      font-size: 8.5pt;
+      color: #0f172a;
+    }
+
+    .flow-arrow {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 11pt;
+      line-height: 1;
+      margin: 2px 0;
+    }
+
+    /* Tags */
+    .tag {
+      display: inline-block;
+      font-size: 7pt;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    .tag-green { background: #dcfce7; color: #166534; }
+    .tag-blue { background: #e0f2fe; color: #075985; }
+    .tag-amber { background: #fef3c7; color: #92400e; }
+
+    /* Magazine Footer */
+    .mag-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 7.5pt;
+      color: #64748b;
+    }
+
+    .mag-footer .page-number {
+      font-weight: 700;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== HALAMAN 1 ==================== -->
+  <div class="page">
+    <div class="mag-topbar">
+      <span>Pemrograman Bergerak &bull; Sub-CPMK 1</span>
+      <span class="meta-right">Dokumen Spesifikasi Kebutuhan & Target Aplikasi &bull; Edisi 2026</span>
+    </div>
+
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <div class="badge-subcpmk">Tugas-1: Analisis Kebutuhan Pengguna & Karakteristik Perangkat Bergerak</div>
+      <h1 class="hero-title">Rancang Bangun Aplikasi Mobile POS "Sarjana Degan" Madiun</h1>
+      <p class="hero-subtitle">Digitalisasi Kasir Offline-First Berbasis Flutter untuk Efisiensi Pencatatan Operasional Agen Kelapa dan Es Cup Dua Cabang</p>
+      
+      <div class="hero-meta-grid">
+        <div class="hero-meta-item">
+          <strong>Studi Kasus</strong>
+          Sarjana Degan (2 Cabang Madiun)
+        </div>
+        <div class="hero-meta-item">
+          <strong>Teknologi Utama</strong>
+          Flutter &bull; Dart &bull; SQLite (Offline-First)
+        </div>
+        <div class="hero-meta-item">
+          <strong>Format Luaran</strong>
+          Dokumen Majalah Profesional [PDF]
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1: Latar Belakang -->
+    <div class="section-title">
+      <span class="section-num">1</span>
+      <span>Latar Belakang & Identifikasi Permasalahan Lapangan</span>
+    </div>
+
+    <div class="col-2">
+      <div>
+        <p style="margin-top: 0; text-align: justify;">
+          <strong>"Sarjana Degan"</strong> merupakan usaha mikro, kecil, dan menengah (UMKM) yang bergerak dalam perdagangan kelapa muda segar dan produk olahan es cup di Kota Madiun. Saat ini, usaha telah berkembang dan memiliki <strong>2 cabang operasional aktif</strong>. Aktivitas harian mencakup pembelian kelapa mentah, penjualan kelapa butiran, dan proses konversi produksi kelapa menjadi es cup (1 butir kelapa diolah menjadi 3 porsi cup).
+        </p>
+        <p style="text-align: justify;">
+          Di balik tingginya perputaran barang, seluruh aktivitas pencatatan kasir di kedua cabang masih 100% menggunakan <strong>buku tulis kertas dan nota manual</strong>. Hal ini memicu disinkronisasi data, risiko selisih perhitungan transaksi, dan lambatnya pemantauan oleh pemilik usaha.
+        </p>
+      </div>
+
+      <div>
+        <div class="card warning" style="margin-top: 0;">
+          <div class="card-title">⚠️ Masalah Kritis Sistem Berjalan</div>
+          <ul style="margin: 0; padding-left: 16px; font-size: 8.5pt;">
+            <li><strong>Human Error:</strong> Perhitungan kasir mengandalkan kalkulator dan daya ingat staf saat antrean ramai.</li>
+            <li><strong>Stok & Produksi Buta:</strong> Stok kelapa dan hasil cup es di 2 cabang tidak termonitor secara terpusat.</li>
+            <li><strong>Rekap Melelahkan:</strong> Staf menghabiskan 1–2 jam tiap malam merekap nota fisik secara manual.</li>
+            <li><strong>Ketiadaan Struk:</strong> Konsumen tidak menerima bukti belanja digital, memicu sengketa hitungan.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Temuan Statistik -->
+    <div style="margin-top: 8px;">
+      <div class="col-3">
+        <div class="stat-box">
+          <div class="stat-number red">3–5 Mnt</div>
+          <div class="stat-label">Waktu Rata-rata Transaksi Manual</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number red">&plusmn;15%</div>
+          <div class="stat-label">Tingkat Kesalahan Rekapitulasi Nota</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number">2 Cabang</div>
+          <div class="stat-label">Titik Operasional Butuh Digitalisasi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Flowchart Sistem Berjalan -->
+    <div class="section-title">
+      <span class="section-num">2</span>
+      <span>Analisis Sistem yang Berjalan (Flowchart Manual)</span>
+    </div>
+
+    <div class="flowchart-wrapper">
+      <div class="flow-step danger">
+        <div class="flow-badge">1</div>
+        <div class="flow-text"><strong>Pelanggan Datang & Memesan</strong> Staf menanyakan pesanan secara lisan (Kelapa butir / Es cup).</div>
+        <span class="tag tag-red">Manual</span>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step danger">
+        <div class="flow-badge">2</div>
+        <div class="flow-text"><strong>Perhitungan Harga Kasir</strong> Dihitung manual di ingatan/kalkulator saku; rawan salah bila harga kelapa berubah.</div>
+        <span class="tag tag-red">Kritis</span>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step danger">
+        <div class="flow-badge">3</div>
+        <div class="flow-text"><strong>Pencatatan Buku Kasir</strong> Staf menulis di buku penjualan; tulisan sering tidak terbaca atau tercecer.</div>
+        <span class="tag tag-red">Rentan Rusak</span>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step danger">
+        <div class="flow-badge">4</div>
+        <div class="flow-text"><strong>Pembayaran & Kembalian</strong> Pelanggan bayar tunai; kembalian dihitung manual tanpa bukti struk belanja.</div>
+        <span class="tag tag-red">Tanpa Struk</span>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step danger">
+        <div class="flow-badge">5</div>
+        <div class="flow-text"><strong>Rekap Malam Hari (Tutup Toko)</strong> Staf menjumlahkan seluruh lembar buku manual (1–2 jam) lalu lapor via WhatsApp.</div>
+        <span class="tag tag-red">Boros Waktu</span>
+      </div>
+    </div>
+
+    <div class="mag-footer">
+      <span>Majalah Analisis Kebutuhan Mobile POS &bull; Kasir Sarjana Degan</span>
+      <span class="page-number">Halaman 1</span>
+    </div>
+  </div>
+
+  <!-- ==================== HALAMAN 2 ==================== -->
+  <div class="page">
+    <div class="mag-topbar">
+      <span>Pemrograman Bergerak &bull; Sub-CPMK 1</span>
+      <span class="meta-right">Solusi & Karakteristik Perangkat Bergerak &bull; Edisi 2026</span>
+    </div>
+
+    <!-- Section 3: Solusi Ditawarkan -->
+    <div class="section-title">
+      <span class="section-num">3</span>
+      <span>Solusi yang Ditawarkan: Aplikasi Kasir Bergerak (Flutter)</span>
+    </div>
+
+    <p style="margin-top: 0; text-align: justify;">
+      Sebagai solusi, dikembangkan aplikasi <strong>Mobile Point of Sale (POS)</strong> berbasis <strong>Flutter</strong> dengan arsitektur <em>offline-first</em>. Aplikasi ini beroperasi pada smartphone Android staf kasir tanpa ketergantungan koneksi internet terus-menerus. Aplikasi kasir bergerak ini menjadi pintu gerbang input data bagi ekosistem bisnis Sarjana Degan Madiun.
+    </p>
+
+    <!-- Flowchart Sistem Baru -->
+    <div class="flowchart-wrapper">
+      <div class="flow-step success">
+        <div class="flow-badge">1</div>
+        <div class="flow-text"><strong>Buka Aplikasi Kasir Flutter</strong> Staf membuka aplikasi yang responsif dan langsung siap input transaksi.</div>
+        <span class="tag tag-green">Cepat</span>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step success">
+        <div class="flow-badge">2</div>
+        <div class="flow-text"><strong>Pilih Produk & Kuantitas</strong> Ketuk produk (Kelapa / Es Cup). Harga otomatis dikalkulasi sistem real-time.</div>
+        <span class="tag tag-green">Zero Error</span>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step success">
+        <div class="flow-badge">3</div>
+        <div class="flow-text"><strong>Input Bayar & Hitung Kembalian</strong> Sistem langsung menampilkan uang kembalian secara otomatis dan akurat.</div>
+        <span class="tag tag-green">Akurat</span>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step success">
+        <div class="flow-badge">4</div>
+        <div class="flow-text"><strong>Simpan Database Lokal SQLite</strong> Transaksi tersimpan instan secara offline-first dengan integritas data tinggi.</div>
+        <span class="tag tag-blue">Offline SQLite</span>
+      </div>
+      <div class="flow-arrow">&darr;</div>
+      <div class="flow-step success">
+        <div class="flow-badge">5</div>
+        <div class="flow-text"><strong>Struk Digital & Laporan Instan</strong> Struk tampil di layar/siap cetak thermal; omzet harian langsung terkapitulasi otomatis.</div>
+        <span class="tag tag-green">Otomatis</span>
+      </div>
+    </div>
+
+    <div class="col-2" style="margin-top: 10px;">
+      <div class="card accent">
+        <div class="card-title">💡 Nilai Tambah Sistem Baru</div>
+        <ul style="margin: 0; padding-left: 16px; font-size: 8pt;">
+          <li>Durasi transaksi turun dari 5 menit menjadi <strong>&lt; 1 menit</strong>.</li>
+          <li>Kalkulasi harga dan kembalian <strong>100% akurat</strong> tanpa kalkulator.</li>
+          <li>Staf tidak perlu rekap manual malam hari; laporan otomatis tersaji.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📚 Sumber Referensi Ilmiah</div>
+        <ul style="margin: 0; padding-left: 16px; font-size: 7.5pt; color: #475569;">
+          <li>Google Developers. (2023). <em>Building Offline-First Architectures with Flutter and SQLite</em>.</li>
+          <li>Sommerville, I. (2016). <em>Software Engineering</em> (10th ed.). Pearson Education.</li>
+          <li>Statista. (2024). <em>Mobile POS Digital Adoption in Southeast Asia MSMEs</em>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 4: Spesifikasi Pengembang -->
+    <div class="section-title">
+      <span class="section-num">4</span>
+      <span>Spesifikasi Kebutuhan Pengembang (Developer Specifications)</span>
+    </div>
+
+    <div class="col-2">
+      <div>
+        <table style="margin-top: 0;">
+          <thead>
+            <tr><th>Spesifikasi Hardware</th><th>Kondisi Pengembang</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Processor</strong></td><td>Intel Core / AMD Multi-Core</td></tr>
+            <tr><td><strong>RAM</strong></td><td>8 GB DDR4 (Aktif Terverifikasi)</td></tr>
+            <tr><td><strong>Storage</strong></td><td>SSD NVMe &gt; 20 GB Free</td></tr>
+            <tr><td><strong>Sistem Operasi</strong></td><td>Microsoft Windows 10/11 x64</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <table style="margin-top: 0;">
+          <thead>
+            <tr><th>Stack Software</th><th>Keterangan / Versi</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Framework</strong></td><td>Flutter 3.x (Dart 3.13+)</td></tr>
+            <tr><td><strong>Database Lokal</strong></td><td>SQLite (via package <code>sqflite</code>)</td></tr>
+            <tr><td><strong>State Management</strong></td><td>Provider / ChangeNotifier</td></tr>
+            <tr><td><strong>Format & Receipt</strong></td><td><code>intl</code> (Rp), <code>pdf</code>, <code>printing</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Folder Architecture -->
+    <div class="card" style="margin-top: 4px; padding: 8px 12px;">
+      <div class="card-title" style="font-size: 8.5pt;">📁 Arsitektur Direktori Kode (Clean Layered)</div>
+      <div style="font-family: monospace; font-size: 7.5pt; color: #047857;">
+        lib/ &bull; <strong>models/</strong> (product.dart, transaction.dart) &bull; <strong>screens/</strong> (home_screen.dart, pos_screen.dart, report_screen.dart) &bull; <strong>database/</strong> (db_helper.dart SQLite) &bull; <strong>widgets/</strong> (cart_card.dart)
+      </div>
+    </div>
+
+    <div class="mag-footer">
+      <span>Majalah Analisis Kebutuhan Mobile POS &bull; Kasir Sarjana Degan</span>
+      <span class="page-number">Halaman 2</span>
+    </div>
+  </div>
+
+  <!-- ==================== HALAMAN 3 ==================== -->
+  <div class="page">
+    <div class="mag-topbar">
+      <span>Pemrograman Bergerak &bull; Sub-CPMK 1</span>
+      <span class="meta-right">Spesifikasi Target & Karakteristik Mobile &bull; Edisi 2026</span>
+    </div>
+
+    <!-- Section 5: Spesifikasi Target & Mobile Karakteristik -->
+    <div class="section-title">
+      <span class="section-num">5</span>
+      <span>Spesifikasi Target & Karakteristik Perangkat Bergerak</span>
+    </div>
+
+    <div class="col-2">
+      <!-- Target Device -->
+      <div>
+        <div class="card" style="margin-top: 0;">
+          <div class="card-title">📱 Spesifikasi Minimum Perangkat Staf</div>
+          <table style="margin: 0;">
+            <tbody>
+              <tr><td><strong>OS</strong></td><td>Android 8.0 (Oreo / API 26) ke atas</td></tr>
+              <tr><td><strong>Memori RAM</strong></td><td>Minimal 2 GB RAM (Sangat Ringan)</td></tr>
+              <tr><td><strong>Penyimpanan</strong></td><td>100 MB free space untuk APK & DB</td></tr>
+              <tr><td><strong>Layar</strong></td><td>5.0 inch (Resolusi 720 &times; 1280)</td></tr>
+              <tr><td><strong>Konektivitas</strong></td><td>Stand-alone (Offline-First)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin-top: 6px;">
+          <div class="card-title">👥 Profil Pengguna Target (Persona)</div>
+          <p style="font-size: 8pt; margin: 0; color: #334155;">
+            <strong>Staf Kasir Cabang:</strong> Usia 20–40 tahun, terbiasa menggunakan WhatsApp dan kalkulator ponsel. Membutuhkan antarmuka yang sangat ringkas, tombol besar, kontras tinggi, dan tanpa pengaturan rumit saat melayani antrean pembeli kelapa.
+          </p>
+        </div>
+      </div>
+
+      <!-- Prioritas Fitur -->
+      <div>
+        <table style="margin-top: 0;">
+          <thead>
+            <tr><th>Fitur Aplikasi</th><th>Prioritas</th><th>Fungsi Utama</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Katalog Kelapa & Es</strong></td>
+              <td><span class="tag tag-red">Wajib</span></td>
+              <td>Pilihan instan kelapa butir & es cup</td>
+            </tr>
+            <tr>
+              <td><strong>Keranjang & Kalkulasi</strong></td>
+              <td><span class="tag tag-red">Wajib</span></td>
+              <td>Hitung total transaksi otomatis</td>
+            </tr>
+            <tr>
+              <td><strong>Hitung Kembalian</strong></td>
+              <td><span class="tag tag-red">Wajib</span></td>
+              <td>Cegah salah kembalian saat ramai</td>
+            </tr>
+            <tr>
+              <td><strong>Database SQLite</strong></td>
+              <td><span class="tag tag-red">Wajib</span></td>
+              <td>Simpan histori transaksi offline</td>
+            </tr>
+            <tr>
+              <td><strong>Rekap Harian Instan</strong></td>
+              <td><span class="tag tag-amber">Penting</span></td>
+              <td>Gantikan pembukuan manual malam</td>
+            </tr>
+            <tr>
+              <td><strong>Struk Digital PDF</strong></td>
+              <td><span class="tag tag-amber">Penting</span></td>
+              <td>Bukti pembelian transparan</td>
+            </tr>
+            <tr>
+              <td><strong>Pencatatan Konversi</strong></td>
+              <td><span class="tag tag-blue">Tambahan</span></td>
+              <td>Formula 1 butir kelapa &rarr; 3 cup es</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Karakteristik Mobile -->
+    <div class="card accent" style="margin-top: 10px;">
+      <div class="card-title">📐 Pertimbangan Karakteristik Perangkat Bergerak (Sub-CPMK 1)</div>
+      <div class="col-2" style="gap: 12px; margin-top: 6px;">
+        <div>
+          <p style="margin: 0 0 6px 0; font-size: 8pt;">
+            <strong>1. Antarmuka Sentuh (Touch-First UX):</strong><br>
+            Tombol kasir berukuran minimal 48dp dengan keyboard khusus numerik agar staf dapat mengetik cepat tanpa salah tekan di lingkungan toko terbuka.
+          </p>
+          <p style="margin: 0; font-size: 8pt;">
+            <strong>2. Offline-First Data Storage:</strong><br>
+            Koneksi internet di lokasi lapak pinggir jalan tidak selalu stabil. Penyimpanan lokal SQLite menjamin transaksi tetap berjalan lancar 100% tanpa jaringan.
+          </p>
+        </div>
+        <div>
+          <p style="margin: 0 0 6px 0; font-size: 8pt;">
+            <strong>3. Konsumsi Daya Rendah (Battery Efficiency):</strong><br>
+            Mengeliminasi proses background berlebihan agar baterai smartphone staf bertahan seharian penuh selama jam buka toko.
+          </p>
+          <p style="margin: 0; font-size: 8pt;">
+            <strong>4. Keamanan Transaksi & Ketahanan Data:</strong><br>
+            Mekanisme auto-save transaksi menjamin data tidak hilang jika smartphone kehabisan baterai atau aplikasi tertutup tiba-tiba.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kesimpulan -->
+    <div style="background: #0f172a; color: #ffffff; border-radius: 8px; padding: 14px 18px; margin-top: 10px;">
+      <div style="font-family: 'Space Grotesk', sans-serif; font-size: 11pt; font-weight: 700; color: #34d399; margin-bottom: 4px;">
+        📌 Kesimpulan Analisis
+      </div>
+      <p style="font-size: 8pt; margin: 0; line-height: 1.5; color: #e2e8f0; text-align: justify;">
+        Pengembangan aplikasi Mobile POS berbasis Flutter untuk <strong>"Sarjana Degan" Madiun</strong> memenuhi seluruh kriteria analisis kebutuhan pengguna dan karakteristik perangkat bergerak. Dengan arsitektur <em>offline-first</em>, antarmuka ergonomis layar sentuh, dan pencatatan transaksi otomatis, aplikasi ini berhasil memecahkan hambatan operasional 2 cabang, menghapus risiko <em>human error</em>, serta menaikkan produktivitas staf secara signifikan.
+      </p>
+    </div>
+
+    <div class="mag-footer">
+      <span>Majalah Analisis Kebutuhan Mobile POS &bull; Kasir Sarjana Degan</span>
+      <span class="page-number">Halaman 3</span>
+    </div>
+  </div>
+
+</body>
+</html>
+
