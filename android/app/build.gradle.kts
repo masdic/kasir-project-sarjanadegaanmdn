@@ -36,6 +36,18 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    packaging {
+        jniLibs {
+            keepDebugSymbols.add("**/*.so")
+        }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    allTasks.filter { it.name.contains("StripDebugSymbols") }.forEach {
+        it.enabled = false
+    }
 }
 
 kotlin {
