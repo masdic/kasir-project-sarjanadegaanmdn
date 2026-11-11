@@ -319,11 +319,11 @@ class DatabaseHelper {
   // ==========================================
   // OPERASI TRANSAKSI (INVOICE & KASIR)
   // ==========================================
-  Future<String> generateInvoiceNumber() async {
+  Future<String> generateInvoiceNumber([String outletCode = 'SD01']) async {
     final db = await instance.database;
     final now = DateTime.now();
     final yyyymmdd = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
-    final prefix = 'TRX-$yyyymmdd-';
+    final prefix = 'TRX-$outletCode-$yyyymmdd-';
 
     final result = await db.rawQuery('''
       SELECT invoiceNumber FROM Transactions 

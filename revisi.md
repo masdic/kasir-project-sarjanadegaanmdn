@@ -1,34 +1,36 @@
 # RENCANA IMPLEMENTASI (revisi.md)
-# FIX BUILD ANDROID: ELIMINASI DEPENDENSI CMAKE DENGAN MELEPAS PATH_PROVIDER
+# FASE 4: MODAL PEMBAYARAN CEPAT (QUICK PAY), SIMPAN TRANSAKSI & PEMOTONGAN STOK
 ================================================================================
-STATUS: SELESAI DITERAPKAN & SUKSES BERJALAN DI REALME C21Y ✅
+STATUS: SELESAI DITERAPKAN & LIVE DI REALME C21Y ✅
 TANGGAL: 11 November 2026
-PERANGKAT: Realme C21Y (RMX3261, Android 11, API 30) via USB
+PERANGKAT: Realme C21Y (Android 11, API 30) via USB
 ================================================================================
 
-## 1. Hasil Eksekusi & Pembuktian
-- ✅ Platform Android SDK `android-35` & `android-36` berhasil dikenali Gradle.
-- ✅ Menghapus `path_provider` yang menarik library CMake & C++ (:jni) yang tidak dibutuhkan.
-- ✅ Inisialisasi SQLite database di `lib/database/database_helper.dart` kini 100% native murni Java di Android (`getDatabasesPath()`) dan aman di Windows (`APPDATA`).
-- ✅ Build APK `app-debug.apk` sukses (140 MB).
-- ✅ Streaming install via ADB ke Realme C21Y sukses.
-- ✅ Aplikasi aktif berjalan (PID terverifikasi), tampilan layar Login Kasir Sarjana Degan POS langsung tampil segar di layar fisik Realme C21Y.
+## 1. Hasil Implementasi Fitur Pembayaran (Phase 4)
+- ✅ **Prefiks Invoice Kode Outlet:** `DatabaseHelper.generateInvoiceNumber([String outletCode = 'SD01'])` menghasilkan nomor nota unik `TRX-SD01-YYYYMMDD-001` (Cabang 1) dan `TRX-SD02-YYYYMMDD-001` (Cabang 2).
+- ✅ **Modal Pembayaran Cepat (`_PaymentModalSheet`):**
+  - Tagihan besar jelas format Rupiah.
+  - Tab Selektor: **TUNAI (CASH)** dan **QRIS / TRANSFER**.
+  - Tombol pecahan cepat: `[ Uang Pas ]`, `[ Rp 10.000 ]`, `[ Rp 20.000 ]`, `[ Rp 50.000 ]`, `[ Rp 100.000 ]`.
+  - Input nominal fleksibel jika pembeli membayar nominal pecahan lain.
+  - Kalkulator kembalian instan otomatis (Hijau jika pas/lebih, Merah jika uang kurang dan tombol proses dinonaktifkan).
+- ✅ **Simpan SQLite & Pemotongan Stok Otomatis:**
+  - Header transaksi tersimpan di tabel `Transactions`.
+  - Rincian belanja tersimpan di tabel `TransactionItems`.
+  - Stok produk di tabel `Products` terpotong secara otomatis via atomic transaction.
+- ✅ **Dialog Struk Nota Sukses (`_showReceiptDialog`):**
+  - Tampilan struk digital lengkap dengan nomor nota, rincian barang, total, bayar, dan kembalian.
+  - Tombol `SELESAI / TRANSAKSI BARU` otomatis mengosongkan keranjang dan me-refresh sisa stok di katalog.
 
 ---
 
 ## 2. Berkas yang Dimodifikasi
 | No | Berkas | Deskripsi |
 |---|---|---|
-| 1 | `pubspec.yaml` & `pubspec.lock` | Melepas dependensi `path_provider: ^2.1.2` |
-| 2 | `lib/database/database_helper.dart` | Migrasi path dokumen Windows/Linux ke standar `dart:io` `Platform.environment` |
-| 3 | `android/app/build.gradle.kts` | Menambahkan `packaging.jniLibs.keepDebugSymbols` dan menonaktifkan task strip symbols pada debug |
+| 1 | `lib/database/database_helper.dart` | Support parameter `outletCode` di `generateInvoiceNumber` |
+| 2 | `lib/screens/cashier_pos_screen.dart` | Implementasi `_openPaymentModal`, `_PaymentModalSheet`, `_showReceiptDialog`, & integrasi tombol BAYAR |
 
 ---
 
-## 3. Langkah Selanjutnya (Next Agenda)
-1. Uji coba masukkan PIN di layar HP:
-   - Cabang 1: **1234**
-   - Cabang 2: **5678**
-   - Owner (Dicky): **8888**
-2. Masuk ke Layar Utama Kasir POS (Katalog Produk & Keranjang Belanja).
-3. Melanjutkan ke Phase 4: Modal Pembayaran Cepat & Pengurangan Stok Otomatis.
+## 3. Langkah Selanjutnya (Next Step)
+- Melanjutkan ke **Tahap 2: Layar Rekapan Harian & Tombol Kirim WhatsApp ke Mas Dicky**.
