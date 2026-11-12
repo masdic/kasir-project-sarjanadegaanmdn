@@ -52,11 +52,47 @@ class DatabaseHelper {
       path = join(dbPath, filePath);
     }
 
-    return await openDatabase(
+    final db = await openDatabase(
       path,
       version: 1,
       onCreate: _createDB,
     );
+
+    // Pastikan tabel SupplierDeliveries selalu tersedia
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS SupplierDeliveries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        deliveryDate TEXT NOT NULL,
+        outletCode TEXT NOT NULL,
+        productId INTEGER NOT NULL,
+        productName TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        supplierName TEXT,
+        notes TEXT
+      )
+    ''');
+
+    // Tabel Distribusi Stok Terpusat (Pilihan 3: Owner Kirim ➔ Kasir Verifikasi)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS StockTransfers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transferNumber TEXT UNIQUE NOT NULL,
+        transferDate TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT 'Gudang Pusat (Owner)',
+        targetOutlet TEXT NOT NULL,
+        productId INTEGER NOT NULL,
+        productName TEXT NOT NULL,
+        sentQuantity INTEGER NOT NULL,
+        receivedQuantity INTEGER,
+        status TEXT NOT NULL DEFAULT 'PENDING',
+        notes TEXT,
+        discrepancyReason TEXT,
+        receivedDate TEXT,
+        receivedBy TEXT
+      )
+    ''');
+
+    return db;
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -505,5 +541,152 @@ class DatabaseHelper {
       'totalExpenses': totalExp,
       'netCash': netCash,
     };
+  }
+
+  // ==========================================
+  // OPERASI STOK KELAPA MASUK DARI SUPPLIER
+  // ==========================================
+  Future<void> recordSupplierDelivery({
+    required String outletCode,
+    required int productId,
+    required String productName,
+    required int quantity,
+    String? supplierName,
+    String? notes,
+  }) async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      // 1. Simpan riwayat kiriman supplier
+      await txn.insert('SupplierDeliveries', {
+        'deliveryDate': DateTime.now().toIso8601String(),
+        'outletCode': outletCode,
+        'productId': productId,
+        'productName': productName,
+        'quantity': quantity,
+        'supplierName': supplierName ?? 'Supplier Langganan',
+        'notes': notes,
+      });
+
+      // 2. Tambah stok produk secara otomatis
+      await txn.rawUpdate('''
+        UPDATE Products SET stock = stock + ? WHERE id = ?
+      ''', [quantity, productId]);
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getSupplierDeliveries({String? outletCode}) async {
+    final db = await instance.database;
+    String? whereClause;
+    List<dynamic>? whereArgs;
+    if (outletCode != null) {
+      whereClause = 'outletCode = ?';
+      whereArgs = [outletCode];
+    }
+    return await db.query(
+      'SupplierDeliveries',
+      where: whereClause,
+      whereArgs: whereArgs,
+      orderBy: 'id DESC',
+    );
+  }
+
+  // ==========================================
+  // OPERASI DISTRIBUSI STOK OWNER (PILIHAN 3)
+  // ==========================================
+  Future<String> generateTransferNumber() async {
+    final db = await instance.database;
+    final now = DateTime.now();
+    final ymd = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final prefix = 'TRF-$ymd-';
+
+    final result = await db.rawQuery('''
+      SELECT transferNumber FROM StockTransfers 
+      WHERE transferNumber LIKE ? 
+      ORDER BY id DESC LIMIT 1
+    ''', ['$prefix%']);
+
+    int nextNum = 1;
+    if (result.isNotEmpty) {
+      final lastNum = result.first['transferNumber'] as String? ?? '';
+      final parts = lastNum.split('-');
+      if (parts.length >= 3) {
+        nextNum = (int.tryParse(parts.last) ?? 0) + 1;
+      }
+    }
+    return '$prefix${nextNum.toString().padLeft(3, '0')}';
+  }
+
+  Future<int> createStockTransfer({
+    required String targetOutlet,
+    required int productId,
+    required String productName,
+    required int sentQuantity,
+    String? notes,
+  }) async {
+    final db = await instance.database;
+    final trfNumber = await generateTransferNumber();
+
+    return await db.insert('StockTransfers', {
+      'transferNumber': trfNumber,
+      'transferDate': DateTime.now().toIso8601String(),
+      'source': 'Gudang Pusat (Owner)',
+      'targetOutlet': targetOutlet,
+      'productId': productId,
+      'productName': productName,
+      'sentQuantity': sentQuantity,
+      'status': 'PENDING',
+      'notes': notes ?? 'Kiriman resmi Owner',
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getPendingTransfers(String targetOutlet) async {
+    final db = await instance.database;
+    // Cari yang match targetOutlet atau alias (misal 'Cabang 1' vs 'SD01')
+    return await db.query(
+      'StockTransfers',
+      where: "(targetOutlet = ? OR targetOutlet LIKE ?) AND status = 'PENDING'",
+      whereArgs: [targetOutlet, '%$targetOutlet%'],
+      orderBy: 'id DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllStockTransfers() async {
+    final db = await instance.database;
+    return await db.query('StockTransfers', orderBy: 'id DESC');
+  }
+
+  Future<void> confirmStockTransfer({
+    required int transferId,
+    required int productId,
+    required int receivedQuantity,
+    required String receivedBy,
+    String? discrepancyReason,
+  }) async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      // 1. Ambil data transfer lama untuk cek selisih
+      final maps = await txn.query('StockTransfers', where: 'id = ?', whereArgs: [transferId], limit: 1);
+      final sentQty = maps.isNotEmpty ? (maps.first['sentQuantity'] as int? ?? receivedQuantity) : receivedQuantity;
+      final finalStatus = receivedQuantity == sentQty ? 'DITERIMA' : 'DITERIMA_SELISIH';
+
+      // 2. Update status transfer
+      await txn.update(
+        'StockTransfers',
+        {
+          'receivedQuantity': receivedQuantity,
+          'status': finalStatus,
+          'receivedDate': DateTime.now().toIso8601String(),
+          'receivedBy': receivedBy,
+          'discrepancyReason': discrepancyReason,
+        },
+        where: 'id = ?',
+        whereArgs: [transferId],
+      );
+
+      // 3. Tambah stok produk di cabang sesuai jumlah fisik yang benar-benar diterima
+      await txn.rawUpdate('''
+        UPDATE Products SET stock = stock + ? WHERE id = ?
+      ''', [receivedQuantity, productId]);
+    });
   }
 }

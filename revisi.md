@@ -1,36 +1,30 @@
 # RENCANA IMPLEMENTASI (revisi.md)
-# FASE 4: MODAL PEMBAYARAN CEPAT (QUICK PAY), SIMPAN TRANSAKSI & PEMOTONGAN STOK
+# FASE 5: FITUR INPUT STOK KELAPA MASUK DARI SUPPLIER KE CABANG
 ================================================================================
-STATUS: SELESAI DITERAPKAN & LIVE DI REALME C21Y ✅
-TANGGAL: 11 November 2026
-PERANGKAT: Realme C21Y (Android 11, API 30) via USB
+STATUS: SEDANG DITERAPKAN (EXECUTING)
+TANGGAL: 12 November 2026
+TARGET: Modal Input Stok Kelapa Masuk Supplier, Pencatatan Tabel SQLite, & Auto-Refresh Katalog
 ================================================================================
 
-## 1. Hasil Implementasi Fitur Pembayaran (Phase 4)
-- ✅ **Prefiks Invoice Kode Outlet:** `DatabaseHelper.generateInvoiceNumber([String outletCode = 'SD01'])` menghasilkan nomor nota unik `TRX-SD01-YYYYMMDD-001` (Cabang 1) dan `TRX-SD02-YYYYMMDD-001` (Cabang 2).
-- ✅ **Modal Pembayaran Cepat (`_PaymentModalSheet`):**
-  - Tagihan besar jelas format Rupiah.
-  - Tab Selektor: **TUNAI (CASH)** dan **QRIS / TRANSFER**.
-  - Tombol pecahan cepat: `[ Uang Pas ]`, `[ Rp 10.000 ]`, `[ Rp 20.000 ]`, `[ Rp 50.000 ]`, `[ Rp 100.000 ]`.
-  - Input nominal fleksibel jika pembeli membayar nominal pecahan lain.
-  - Kalkulator kembalian instan otomatis (Hijau jika pas/lebih, Merah jika uang kurang dan tombol proses dinonaktifkan).
-- ✅ **Simpan SQLite & Pemotongan Stok Otomatis:**
-  - Header transaksi tersimpan di tabel `Transactions`.
-  - Rincian belanja tersimpan di tabel `TransactionItems`.
-  - Stok produk di tabel `Products` terpotong secara otomatis via atomic transaction.
-- ✅ **Dialog Struk Nota Sukses (`_showReceiptDialog`):**
-  - Tampilan struk digital lengkap dengan nomor nota, rincian barang, total, bayar, dan kembalian.
-  - Tombol `SELESAI / TRANSAKSI BARU` otomatis mengosongkan keranjang dan me-refresh sisa stok di katalog.
+## 1. Latar Belakang & Kebutuhan Pengguna
+Pengguna ingin kasir/cabang dapat langsung mencatat kiriman buah kelapa baru yang datang dari supplier ke lapak (Cabang 1 Alun-Alun / Cabang 2 Pasar Besar):
+1. **Selektor Jenis Kelapa:** Kasir dapat memilih jenis kelapa yang datang (Kelapa Muda Ijo Utuh, Kelapa Muda Wulung, dll).
+2. **Jumlah Butir Cepat:** Tombol cepat (+20, +30, +50, +100 butir) serta input angka fleksibel.
+3. **Catatan Supplier:** Menyimpan nama supir / supplier pengirim (misal: "Pak Slamet").
+4. **Pembaruan Stok Seketika:** Stok di tabel SQLite `Products` otomatis bertambah, dan riwayat kiriman tersimpan di tabel `SupplierDeliveries`.
+5. **Real-time Feedback:** Tampilan sisa stok di kartu katalog kasir langsung bertambah tanpa perlu keluar aplikasi.
 
 ---
 
-## 2. Berkas yang Dimodifikasi
-| No | Berkas | Deskripsi |
-|---|---|---|
-| 1 | `lib/database/database_helper.dart` | Support parameter `outletCode` di `generateInvoiceNumber` |
-| 2 | `lib/screens/cashier_pos_screen.dart` | Implementasi `_openPaymentModal`, `_PaymentModalSheet`, `_showReceiptDialog`, & integrasi tombol BAYAR |
+## 2. Rencana Berkas yang Dimodifikasi
+| No | Berkas | Aksi | Deskripsi |
+|---|---|---|---|
+| 1 | `lib/database/database_helper.dart` | Modifikasi | Buat tabel `SupplierDeliveries` & method `recordSupplierDelivery` (atomic transaction update stock) |
+| 2 | `lib/screens/cashier_pos_screen.dart` | Modifikasi | Tambah tombol aksi `[+ Terima Kelapa]` di header kasir, bangun widget modal `_ReceiveCoconutSheet`, dan sinkronisasi refresh katalog |
+| 3 | `test/database_test.dart` | Validasi | Tambah unit test untuk verifikasi kiriman supplier dan penambahan stok |
 
 ---
 
-## 3. Langkah Selanjutnya (Next Step)
-- Melanjutkan ke **Tahap 2: Layar Rekapan Harian & Tombol Kirim WhatsApp ke Mas Dicky**.
+## 3. Estimasi Dampak & Keamanan Sistem
+- **Keamanan Data:** Menggunakan transaksi atomik SQLite sehingga riwayat pengiriman dan penambahan stok selalu sinkron (tidak ada risiko stok bertambah tapi histori hilang).
+- **Pengalaman Pengguna (UX):** Kasir cukup 3 ketukan (Pilih kelapa ➔ Pilih jumlah ➔ Simpan) untuk menyelesaikan pencatatan restock di bawah 10 detik.

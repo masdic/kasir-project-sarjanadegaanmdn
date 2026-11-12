@@ -36,6 +36,9 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
   // Cache data produk di keranjang agar tidak hilang saat filter aktif
   final Map<int, Product> _cartProducts = {};
 
+  // Kiriman kelapa dari Owner yang menunggu verifikasi kasir
+  List<Map<String, dynamic>> _pendingTransfers = [];
+
   late Timer _clockTimer;
   DateTime _currentDateTime = DateTime.now();
 
@@ -43,6 +46,7 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
   void initState() {
     super.initState();
     _loadProducts();
+    _checkPendingTransfers();
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
@@ -50,6 +54,15 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
         });
       }
     });
+  }
+
+  Future<void> _checkPendingTransfers() async {
+    try {
+      final transfers = await DatabaseHelper.instance.getPendingTransfers(widget.branchName);
+      if (mounted) {
+        setState(() => _pendingTransfers = transfers);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -62,6 +75,7 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
   /// Memuat data produk dari SQLite lokal (dengan fallback aman jika database belum terisi)
   Future<void> _loadProducts() async {
     setState(() => _isLoading = true);
+    _checkPendingTransfers();
     try {
       final products = await DatabaseHelper.instance.getProducts();
       if (products.isNotEmpty) {
@@ -525,7 +539,121 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          // Sub-Header Katalog & Aksi Stok Masuk (Distribusi Owner / Kasir)
+          Row(
+            children: [
+              Text(
+                _selectedCategory == 'Semua' ? 'Katalog Menu Cepat' : 'Kategori: $_selectedCategory',
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const Spacer(),
+              if (widget.isOwner)
+                InkWell(
+                  onTap: _openOwnerSendTransferModal,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF93C5FD)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.share_location_outlined, size: 14, color: Color(0xFF1D4ED8)),
+                        SizedBox(width: 6),
+                        Text(
+                          '👑 Kirim Kelapa ke Cabang',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1D4ED8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                InkWell(
+                  onTap: _openCashierCheckTransfersModal,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _pendingTransfers.isNotEmpty ? const Color(0xFFFEF3C7) : const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _pendingTransfers.isNotEmpty ? const Color(0xFFF59E0B) : const Color(0xFF86EFAC),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _pendingTransfers.isNotEmpty ? Icons.notifications_active : Icons.inventory_2_outlined,
+                          size: 14,
+                          color: _pendingTransfers.isNotEmpty ? const Color(0xFFB45309) : const Color(0xFF15803D),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _pendingTransfers.isNotEmpty
+                              ? '📦 Kiriman Masuk (${_pendingTransfers.length})'
+                              : 'Verifikasi Kiriman Owner',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: _pendingTransfers.isNotEmpty ? const Color(0xFFB45309) : const Color(0xFF15803D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (!widget.isOwner && _pendingTransfers.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFCD34D)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.mark_email_unread_outlined, color: Color(0xFFB45309), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Ada ${_pendingTransfers.length} kiriman kelapa baru dari Owner (${_pendingTransfers.first['productName']} - ${_pendingTransfers.first['sentQuantity']} butir). Segera hitung fisik & verifikasi!',
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF92400E)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: _openCashierCheckTransfersModal,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFB45309),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Periksa Fisik', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
           // Grid Kartu Produk
           Expanded(
             child: _isLoading
@@ -1108,6 +1236,55 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
   String get _outletCode {
     if (widget.branchName.contains('2')) return 'SD02';
     return 'SD01';
+  }
+
+  void _openOwnerSendTransferModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return _OwnerSendTransferSheet(
+          products: _allProducts,
+          onSuccess: (String message) {
+            _loadProducts();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
+                backgroundColor: const Color(0xFF1D4ED8),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openCashierCheckTransfersModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return _CashierVerifyTransferSheet(
+          branchName: widget.branchName,
+          products: _allProducts,
+          onSuccess: (String message) {
+            _loadProducts();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
+                backgroundColor: const Color(0xFF15803D),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _openPaymentModal(BuildContext context) {
@@ -1812,4 +1989,1011 @@ class _PaymentModalSheetState extends State<_PaymentModalSheet> {
     );
   }
 }
+
+/// ========================================================
+/// MODAL 1: OWNER KIRIM KELAPA KE CABANG (DISTRIBUSI STOK)
+/// ========================================================
+class _OwnerSendTransferSheet extends StatefulWidget {
+  final List<Product> products;
+  final void Function(String message) onSuccess;
+
+  const _OwnerSendTransferSheet({
+    required this.products,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_OwnerSendTransferSheet> createState() => _OwnerSendTransferSheetState();
+}
+
+class _OwnerSendTransferSheetState extends State<_OwnerSendTransferSheet> {
+  String _targetOutlet = 'Cabang 1'; // 'Cabang 1' atau 'Cabang 2'
+  Product? _selectedProduct;
+  int _sentQuantity = 50;
+  final TextEditingController _qtyController = TextEditingController(text: '50');
+  final TextEditingController _notesController =
+      TextEditingController(text: 'Supir: Pak Slamet (Pickup L300)');
+  bool _isSaving = false;
+  bool _showHistory = false;
+  List<Map<String, dynamic>> _historyList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final coconuts = widget.products
+        .where((p) => p.category == 'Kelapa' || p.name.toLowerCase().contains('kelapa'))
+        .toList();
+    if (coconuts.isNotEmpty) {
+      _selectedProduct = coconuts.first;
+    } else if (widget.products.isNotEmpty) {
+      _selectedProduct = widget.products.first;
+    }
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      final list = await DatabaseHelper.instance.getAllStockTransfers();
+      if (mounted) setState(() => _historyList = list);
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _addQuantity(int delta) {
+    final next = _sentQuantity + delta;
+    if (next > 0) {
+      setState(() {
+        _sentQuantity = next;
+        _qtyController.text = next.toString();
+      });
+    }
+  }
+
+  Future<void> _handleSend() async {
+    if (_selectedProduct == null || _selectedProduct!.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih jenis kelapa terlebih dahulu')),
+      );
+      return;
+    }
+
+    if (_sentQuantity <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jumlah kiriman harus lebih dari 0')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final product = _selectedProduct!;
+      final notes = _notesController.text.trim();
+
+      await DatabaseHelper.instance.createStockTransfer(
+        targetOutlet: _targetOutlet,
+        productId: product.id!,
+        productName: product.name,
+        sentQuantity: _sentQuantity,
+        notes: notes.isEmpty ? null : notes,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onSuccess(
+        'Surat jalan kiriman $_sentQuantity butir ${product.name} ke $_targetOutlet berhasil dibuat! Menunggu verifikasi fisik kasir.',
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuat kiriman: $e'), backgroundColor: Colors.red.shade700),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final coconutProducts = widget.products
+        .where((p) => p.category == 'Kelapa' || p.name.toLowerCase().contains('kelapa'))
+        .toList();
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 14,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.share_location_outlined, color: Color(0xFF1D4ED8), size: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Distribusi Stok Kelapa',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          Text(
+                            '👑 Kontrol Owner • Gudang Pusat ➔ Cabang',
+                            style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Tab Switcher (Form Kirim vs Riwayat)
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _showHistory = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: !_showHistory ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: !_showHistory
+                                ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)]
+                                : null,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Form Kirim Baru',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF1D4ED8)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _showHistory = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _showHistory ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: _showHistory
+                                ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Riwayat Kiriman (${_historyList.length})',
+                              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF475569)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              if (_showHistory) ...[
+                // Daftar Riwayat Kiriman
+                if (_historyList.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    child: const Center(
+                      child: Text('Belum ada riwayat pengiriman stok kelapa.', style: TextStyle(color: Color(0xFF94A3B8))),
+                    ),
+                  )
+                else
+                  ..._historyList.map((trf) {
+                    final status = trf['status'] as String? ?? 'PENDING';
+                    final isPending = status == 'PENDING';
+                    final isSelisih = status == 'DITERIMA_SELISIH';
+
+                    Color statusBg = const Color(0xFFFEF3C7);
+                    Color statusColor = const Color(0xFFB45309);
+                    String statusText = '⏳ PENDING (Menunggu Kasir)';
+
+                    if (status == 'DITERIMA') {
+                      statusBg = const Color(0xFFDCFCE7);
+                      statusColor = const Color(0xFF15803D);
+                      statusText = '✅ DITERIMA LENGKAP';
+                    } else if (isSelisih) {
+                      statusBg = const Color(0xFFFEE2E2);
+                      statusColor = const Color(0xFFB91C1C);
+                      statusText = '⚠️ DITERIMA DENGAN SELISIH';
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                trf['transferNumber'] as String? ?? '-',
+                                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: statusBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(statusText, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: statusColor)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Tujuan: ${trf['targetOutlet']} • ${trf['productName']}',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                          ),
+                          Text(
+                            'Dikirim Owner: ${trf['sentQuantity']} Butir' +
+                                (!isPending ? ' ➔ Fisik Diterima: ${trf['receivedQuantity']} Butir' : ''),
+                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                          ),
+                          if (isSelisih && trf['discrepancyReason'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                'Catatan Selisih: "${trf['discrepancyReason']}"',
+                                style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Color(0xFFB91C1C)),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+              ] else ...[
+                // 1. Pilih Cabang Tujuan
+                const Text(
+                  '1. Pilih Cabang Tujuan Distribusi:',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _targetOutlet = 'Cabang 1'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _targetOutlet == 'Cabang 1' ? const Color(0xFF1D4ED8) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _targetOutlet == 'Cabang 1' ? const Color(0xFF1D4ED8) : const Color(0xFFCBD5E1),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Cabang 1 (Alun-Alun)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: _targetOutlet == 'Cabang 1' ? Colors.white : const Color(0xFF334155),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _targetOutlet = 'Cabang 2'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _targetOutlet == 'Cabang 2' ? const Color(0xFF1D4ED8) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _targetOutlet == 'Cabang 2' ? const Color(0xFF1D4ED8) : const Color(0xFFCBD5E1),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Cabang 2 (Pasar Besar)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: _targetOutlet == 'Cabang 2' ? Colors.white : const Color(0xFF334155),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 2. Pilih Jenis Kelapa
+                const Text(
+                  '2. Pilih Jenis Kelapa yang Dikirim:',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: coconutProducts.map((p) {
+                    final isSelected = _selectedProduct?.id == p.id;
+                    return ChoiceChip(
+                      label: Text('${p.name} (Stok: ${p.stock})'),
+                      selected: isSelected,
+                      onSelected: (_) => setState(() => _selectedProduct = p),
+                      selectedColor: const Color(0xFF1D4ED8),
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : const Color(0xFF334155),
+                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                      backgroundColor: const Color(0xFFF1F5F9),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+
+                // 3. Jumlah Butir Dikirim
+                const Text(
+                  '3. Jumlah Butir yang Diberangkatkan:',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildPillBtn('+20', () => _addQuantity(20)),
+                    _buildPillBtn('+30', () => _addQuantity(30)),
+                    _buildPillBtn('+50', () => _addQuantity(50)),
+                    _buildPillBtn('+100', () => _addQuantity(100)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => _addQuantity(-5),
+                      icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF64748B), size: 28),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: _qtyController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                        decoration: InputDecoration(
+                          suffixText: 'Butir',
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onChanged: (val) {
+                          final p = int.tryParse(val) ?? 0;
+                          setState(() => _sentQuantity = p);
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _addQuantity(5),
+                      icon: const Icon(Icons.add_circle_outline, color: Color(0xFF1D4ED8), size: 28),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // 4. Supir / Ekspedisi Pengantar
+                TextField(
+                  controller: _notesController,
+                  decoration: InputDecoration(
+                    labelText: 'Pengantar / Supir Pickup / Catatan',
+                    labelStyle: const TextStyle(fontSize: 12),
+                    hintText: 'Contoh: Pak Slamet (Pickup L300)',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.local_shipping_outlined, size: 18),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Box Informasi Alur
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: Color(0xFF1D4ED8), size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Setelah tombol ditekan, status kiriman menjadi PENDING. Stok di $_targetOutlet baru akan bertambah setelah kasir menghitung fisik dan klik "Cocok & Terima".',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF1E40AF), height: 1.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Tombol Eksekusi Kirim
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: (_isSaving || _sentQuantity <= 0) ? null : _handleSend,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1D4ED8),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFFE2E8F0),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text(
+                            'KIRIM $_sentQuantity BUTIR KE $_targetOutlet',
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.3),
+                          ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPillBtn(String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+        ),
+        child: Text(label, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
+      ),
+    );
+  }
+}
+
+/// ========================================================
+/// MODAL 2: KASIR VERIFIKASI & TERIMA KELAPA DARI OWNER
+/// ========================================================
+class _CashierVerifyTransferSheet extends StatefulWidget {
+  final String branchName;
+  final List<Product> products;
+  final void Function(String message) onSuccess;
+
+  const _CashierVerifyTransferSheet({
+    required this.branchName,
+    required this.products,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_CashierVerifyTransferSheet> createState() => _CashierVerifyTransferSheetState();
+}
+
+class _CashierVerifyTransferSheetState extends State<_CashierVerifyTransferSheet> {
+  List<Map<String, dynamic>> _pendingList = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPending();
+  }
+
+  Future<void> _loadPending() async {
+    setState(() => _isLoading = true);
+    try {
+      final list = await DatabaseHelper.instance.getPendingTransfers(widget.branchName);
+      if (mounted) {
+        setState(() {
+          _pendingList = list;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _openConfirmDialog(Map<String, dynamic> trf) {
+    final transferId = trf['id'] as int;
+    final productId = trf['productId'] as int;
+    final productName = trf['productName'] as String? ?? 'Kelapa';
+    final sentQty = trf['sentQuantity'] as int? ?? 0;
+    final notes = trf['notes'] as String? ?? '-';
+
+    int receivedQty = sentQty;
+    final qtyCtrl = TextEditingController(text: sentQty.toString());
+    final reasonCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dlgCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setDlgState) {
+            final selisih = sentQty - receivedQty;
+            final hasSelisih = selisih != 0;
+
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              backgroundColor: Colors.white,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 420),
+                padding: const EdgeInsets.all(22),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF15803D), size: 22),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Verifikasi Fisik Kelapa',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                                ),
+                                Text(
+                                  'No: ${trf['transferNumber']}',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Rincian Kiriman dari Owner
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              productName,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Jumlah Dikirim Owner: $sentQty Butir', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
+                            Text('Pengantar / Supir: $notes', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Input Fisik yang Diterima
+                      const Text(
+                        'Hitung Fisik yang Diterima Kasir:',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              if (receivedQty > 0) {
+                                setDlgState(() {
+                                  receivedQty--;
+                                  qtyCtrl.text = receivedQty.toString();
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF64748B), size: 26),
+                          ),
+                          Expanded(
+                            child: TextField(
+                              controller: qtyCtrl,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                              decoration: InputDecoration(
+                                suffixText: 'Butir',
+                                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onChanged: (val) {
+                                final p = int.tryParse(val) ?? 0;
+                                setDlgState(() => receivedQty = p);
+                              },
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              setDlgState(() {
+                                receivedQty++;
+                                qtyCtrl.text = receivedQty.toString();
+                              });
+                            },
+                            icon: const Icon(Icons.add_circle_outline, color: Color(0xFF15803D), size: 26),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Status Kesesuaian
+                      if (!hasSelisih)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF86EFAC)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.check_circle, size: 16, color: Color(0xFF15803D)),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Jumlah fisik pas sesuai kiriman (Lengkap)',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFECACA)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded, size: 16, color: Color(0xFFDC2626)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Ada selisih ${selisih.abs()} butir (${selisih > 0 ? "Kurang" : "Lebih"})!',
+                                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFFDC2626)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: reasonCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Alasan Selisih (Wajib diisi)',
+                            labelStyle: const TextStyle(fontSize: 11.5, color: Color(0xFFDC2626)),
+                            hintText: 'Contoh: 2 butir pecah di bak pickup saat diturunkan',
+                            hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dlgCtx),
+                            child: const Text('Batal', style: TextStyle(color: Color(0xFF64748B))),
+                          ),
+                          const Spacer(),
+                          ElevatedButton(
+                            onPressed: (hasSelisih && reasonCtrl.text.trim().isEmpty)
+                                ? null
+                                : () async {
+                                    Navigator.pop(dlgCtx);
+                                    Navigator.pop(context);
+
+                                    await DatabaseHelper.instance.confirmStockTransfer(
+                                      transferId: transferId,
+                                      productId: productId,
+                                      receivedQuantity: receivedQty,
+                                      receivedBy: 'Kasir ${widget.branchName}',
+                                      discrepancyReason: hasSelisih ? reasonCtrl.text.trim() : null,
+                                    );
+
+                                    widget.onSuccess(
+                                      'Berhasil memverifikasi! Stok $productName di ${widget.branchName} bertambah +$receivedQty butir.',
+                                    );
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF15803D),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              elevation: 0,
+                            ),
+                            child: Text('TERIMA $receivedQty BUTIR'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 14,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF15803D), size: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Verifikasi Kiriman Kelapa',
+                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                          ),
+                          Text(
+                            '${widget.branchName} • Penerimaan Fisik',
+                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              if (_isLoading)
+                const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: Color(0xFF15803D))))
+              else if (_pendingList.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF1F5F9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.check_circle_outline, color: Color(0xFF64748B), size: 28),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Tidak Ada Kiriman Kelapa Menunggu',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF334155)),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Semua kiriman kelapa dari Owner sudah diverifikasi dan masuk ke stok cabang.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8)),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                const Text(
+                  'Kiriman dari Owner yang Menunggu Dihitung Fisik:',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                ),
+                const SizedBox(height: 10),
+                ..._pendingList.map((trf) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFFCD34D), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2)),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              trf['transferNumber'] as String? ?? '-',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text('⏳ MENUNGGU VERIFIKASI', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFB45309))),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          trf['productName'] as String? ?? 'Kelapa',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Jumlah Dikirim Owner: ${trf['sentQuantity']} Butir',
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                        ),
+                        if (trf['notes'] != null && (trf['notes'] as String).isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text('Catatan: "${trf['notes']}"', style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Color(0xFF64748B))),
+                          ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 40,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _openConfirmDialog(trf),
+                            icon: const Icon(Icons.check_circle_outline, size: 16),
+                            label: const Text('Hitung Fisik & Verifikasi Terima', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF15803D),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
