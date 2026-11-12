@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:kasir_pos/assets/coconut_image.dart';
 
 import 'screens/cashier_pos_screen.dart';
+import 'screens/cashier_menu_screen.dart';
 
 void main() {
   runApp(const KasirPinApp());
@@ -240,7 +241,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CashierPosScreen(
+            builder: (context) => CashierMenuScreen(
               branchName: branch,
               shiftName: shift,
               isOwner: isOwner,
