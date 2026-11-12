@@ -19,7 +19,8 @@
 | 7 | **Transaksi & Potong Stok** | Modal bayar Tunai/QRIS, kalkulator kembalian, struk digital, potong stok otomatis | ✅ Selesai |
 | 8 | **Distribusi Stok (Pilihan 3)** | Owner kirim stok (`PENDING`) ➔ Kasir verifikasi fisik (`DITERIMA` / `DITERIMA_SELISIH` + alasan wajib) ➔ Stok cabang bertambah atomik | ✅ Selesai (Live HP) |
 | 9 | **UI Shell Menu Kasir Baru** | Tampilan modern adaptasi dashboard grocery (`cashier_menu_screen.dart`): Top bar, Date-Time bar hijau, 3 kartu statistik, chip kategori horizontal, grid produk 2 kolom, dan bottom nav bar 5 tab | ✅ Selesai (Commit `4d36d6b`) |
-| 10 | **Arsitektur 1 Pintu Owner** | Konsep transaksi outlet 1 & 2 terisolasi per cabang (`outletCode: SD01 / SD02`), bermuara konsolidasi otomatis ke Akun Owner Mas Dicky | ✅ Selesai Dirancang |
+| 10 | **Tahap 1: Koneksi Menu ke Database SQLite** | Data produk nyata SQLite terhubung, sisa stok real, tombol `[+]` tambah keranjang belanja interaktif, proteksi stok habis, floating bar keranjang, filter kategori aktif, pencarian instan | ✅ Selesai (Commit `419fd48`) |
+| 11 | **Arsitektur 1 Pintu Owner** | Konsep transaksi outlet 1 & 2 terisolasi per cabang (`outletCode: SD01 / SD02`), bermuara konsolidasi otomatis ke Akun Owner Mas Dicky | ✅ Selesai Dirancang |
 
 ---
 
