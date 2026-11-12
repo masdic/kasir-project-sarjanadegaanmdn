@@ -1,8 +1,8 @@
 # 📝 Catatan Progress Harian & Roadmap Proyek
 **Proyek:** Kasir POS Sarjana Degan Madiun (Offline-First Flutter)  
-**Tanggal Update:** 12 November 2026 (23:25 WIB)  
-**Status Terakhir:** 🏆 FASE 5 SELESAI + FASE 6 AKTIF (SHELL UI MENU BARU & ARSITEKTUR 1 PINTU DISIAPKAN)  
-**Repositori GitHub:** [github.com/masdic/kasir-project-sarjanadegaanmdn](https://github.com/masdic/kasir-project-sarjanadegaanmdn) (Branch `main`, Commit `4d36d6b`)  
+**Tanggal Update:** 13 November 2026 (00:50 WIB)  
+**Status Terakhir:** 🏆 OPSI 2 (DASHBOARD OWNER 1 PINTU) + KATALOG MENU NETRAL SELESAI  
+**Repositori GitHub:** [github.com/masdic/kasir-project-sarjanadegaanmdn](https://github.com/masdic/kasir-project-sarjanadegaanmdn) (Branch `main`)  
 
 ---
 
@@ -20,20 +20,21 @@
 | 8 | **Distribusi Stok (Pilihan 3)** | Owner kirim stok (`PENDING`) ➔ Kasir verifikasi fisik (`DITERIMA` / `DITERIMA_SELISIH` + alasan wajib) ➔ Stok cabang bertambah atomik | ✅ Selesai (Live HP) |
 | 9 | **UI Shell Menu Kasir Baru** | Tampilan modern adaptasi dashboard grocery (`cashier_menu_screen.dart`): Top bar, Date-Time bar hijau, 3 kartu statistik, chip kategori horizontal, grid produk 2 kolom, dan bottom nav bar 5 tab | ✅ Selesai (Commit `4d36d6b`) |
 | 10 | **Tahap 1: Koneksi Menu ke Database SQLite** | Data produk nyata SQLite terhubung, sisa stok real, tombol `[+]` tambah keranjang belanja interaktif, proteksi stok habis, floating bar keranjang, filter kategori aktif, pencarian instan | ✅ Selesai (Commit `419fd48`) |
-| 11 | **Arsitektur 1 Pintu Owner** | Konsep transaksi outlet 1 & 2 terisolasi per cabang (`outletCode: SD01 / SD02`), bermuara konsolidasi otomatis ke Akun Owner Mas Dicky | ✅ Selesai Dirancang |
+| 11 | **Dashboard 1 Pintu Owner (Opsi 2)** | Konsol eksekutif Mas Dicky (PIN `8888`) memantau total omset gabungan (Tunai vs QRIS), komparasi Cabang 1 vs Cabang 2, dan distribusi stok | ✅ Selesai (Commit `875169b`) |
+| 12 | **Katalog Menu Template Netral** | Penyesuaian sesuai instruksi Mas Dicky: nama produk placeholder (`Menu 1` - `Menu 6`), harga dikosongkan (`Rp —`), kategori netral (`Semua`, `Kategori A`, `Kategori B`), bentuk kartu tetap konsisten | ✅ Selesai |
 
 ---
 
-## 🚧 Status Saat Ini (Sedang Berjalan)
+## 🚧 Status & Arahan Strategis Mas Dicky
+> ⚠️ **Prinsip Utama:** Database akan difinalisasi di akhir. Fokus saat ini adalah **Alur Fungsi, Logika Bisnis, dan UI/UX**.
 
-1. **Layar Menu Kasir Baru (`cashier_menu_screen.dart`):**
-   - Kerangka tampilan (UI Shell) sudah selesai dan dites kompilasi via Chrome (`http://localhost:8080`).
-   - Langkah berikutnya: Menyambungkan data produk asli dari SQLite, fungsionalitas tombol belanja `[+]`, serta kartu statistik penjualan real-time.
-
-2. **Logika 1 Pintu Akun Owner:**
-   - Kasir Cabang 1 hanya mengelola data lapak Alun-Alun (`SD01`).
-   - Kasir Cabang 2 hanya mengelola data lapak Pasar Besar (`SD02`).
-   - Akun Owner (`8888`) memiliki tab filter: `[Semua Cabang] [Cabang 1] [Cabang 2]` untuk melihat omzet, transaksi, dan stok secara terpusat.
+1. **Katalog Menu:**
+   - Dibuat netral (`Menu 1` s/d `Menu 6`, harga `Rp —`, kategori `Kategori A` & `B`).
+   - Siap diisi detail menu dan harga belakangan tanpa merusak tata letak kartu.
+2. **Dashboard Owner 1 Pintu (PIN 8888):**
+   - Berhasil live di Realme C21Y dengan filter gabungan serta rincian Cabang 1 vs Cabang 2.
+3. **Layar Kasir Cabang (PIN 1234 & 5678):**
+   - Menampilkan menu kartu dengan sisa stok, pencarian, dan keranjang belanja floating.
 
 ---
 

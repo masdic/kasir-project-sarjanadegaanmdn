@@ -47,11 +47,11 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
   final Map<int, int> _cart = {};
   final Map<int, Product> _cartProducts = {};
 
-  // Kategori Menu
+  // Kategori Menu Template Netral
   final List<_CategoryDef> _categoryDefs = const [
     _CategoryDef('Semua', Icons.apps_rounded, Color(0xFF15803D)),
-    _CategoryDef('Kelapa', Icons.eco_outlined, Color(0xFF059669)),
-    _CategoryDef('Es Cup', Icons.local_drink_outlined, Color(0xFF0284C7)),
+    _CategoryDef('Kategori A', Icons.category_outlined, Color(0xFF059669)),
+    _CategoryDef('Kategori B', Icons.widgets_outlined, Color(0xFF0284C7)),
   ];
 
   @override
@@ -70,18 +70,17 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
     super.dispose();
   }
 
-  /// Memuat Produk & Statistik Harian dari SQLite
+  /// Memuat Template Produk Netral (Nama & Harga Kosong)
   Future<void> _loadDataFromDatabase() async {
     setState(() => _isLoading = true);
 
     try {
-      final products = await DatabaseHelper.instance.getProducts();
       final summary = await DatabaseHelper.instance.getDailySummary(DateTime.now());
       final transactions = await DatabaseHelper.instance.getTransactions(date: DateTime.now());
 
       if (mounted) {
         setState(() {
-          _allProducts = products.isNotEmpty ? products : _getDefaultFallbackProducts();
+          _allProducts = _getNeutralTemplateProducts();
           _dailySummary = summary;
           _recentTransactions = transactions;
           _applyFilter();
@@ -89,10 +88,9 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
         });
       }
     } catch (_) {
-      // Fallback jika mode web tanpa sqlite native
       if (mounted) {
         setState(() {
-          _allProducts = _getDefaultFallbackProducts();
+          _allProducts = _getNeutralTemplateProducts();
           _applyFilter();
           _isLoading = false;
         });
@@ -100,70 +98,61 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
     }
   }
 
-  List<Product> _getDefaultFallbackProducts() {
+  List<Product> _getNeutralTemplateProducts() {
     return [
       Product(
         id: 1,
         productCode: 'PRD-001',
-        name: 'Kelapa Muda Ijo Utuh',
-        category: 'Kelapa',
-        price: 12000,
+        name: 'Menu 1',
+        category: 'Kategori A',
+        price: 0,
         stock: 50,
-        unit: 'Butir',
+        unit: 'Pcs',
       ),
       Product(
         id: 2,
         productCode: 'PRD-002',
-        name: 'Kelapa Muda Wulung',
-        category: 'Kelapa',
-        price: 15000,
+        name: 'Menu 2',
+        category: 'Kategori A',
+        price: 0,
         stock: 30,
-        unit: 'Butir',
+        unit: 'Pcs',
       ),
       Product(
         id: 3,
         productCode: 'PRD-003',
-        name: 'Kelapa Kupas Siap Minum',
-        category: 'Kelapa',
-        price: 14000,
+        name: 'Menu 3',
+        category: 'Kategori A',
+        price: 0,
         stock: 25,
-        unit: 'Butir',
+        unit: 'Pcs',
       ),
       Product(
         id: 4,
         productCode: 'PRD-004',
-        name: 'Es Degan Gula Jawa',
-        category: 'Es Cup',
-        price: 6000,
-        stock: 60,
-        unit: 'Cup',
+        name: 'Menu 4',
+        category: 'Kategori B',
+        price: 0,
+        stock: 40,
+        unit: 'Pcs',
       ),
       Product(
         id: 5,
         productCode: 'PRD-005',
-        name: 'Es Degan Sirup Merah',
-        category: 'Es Cup',
-        price: 6000,
-        stock: 40,
-        unit: 'Cup',
+        name: 'Menu 5',
+        category: 'Kategori B',
+        price: 0,
+        stock: 35,
+        unit: 'Pcs',
       ),
       Product(
         id: 6,
         productCode: 'PRD-006',
-        name: 'Es Degan Original Murni',
-        category: 'Es Cup',
-        price: 5000,
-        stock: 30,
-        unit: 'Cup',
-      ),
-      Product(
-        id: 7,
-        productCode: 'PRD-007',
-        name: 'Es Degan Susu',
-        category: 'Es Cup',
-        price: 7000,
+        name: 'Menu 6',
+        category: 'Kategori B',
+        price: 0,
         stock: 20,
-        unit: 'Cup',
+        unit: 'Pcs',
       ),
     ];
   }
@@ -436,7 +425,7 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                 onChanged: (_) => _applyFilter(),
                 style: const TextStyle(fontSize: 12.5),
                 decoration: InputDecoration(
-                  hintText: 'Cari kelapa / es cup...',
+                  hintText: 'Cari menu / produk...',
                   hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                   prefixIcon: const Icon(Icons.search, size: 16, color: Color(0xFF94A3B8)),
                   suffixIcon: _searchController.text.isNotEmpty
@@ -846,10 +835,11 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
   Widget _buildProductCard(Product product) {
     final pid = product.id ?? product.productCode.hashCode;
     final inCartQty = _cart[pid] ?? 0;
-    final isKelapa = product.category == 'Kelapa';
-    final cardBgColor = isKelapa ? const Color(0xFFDCFCE7) : const Color(0xFFE0F2FE);
-    final accentColor = isKelapa ? const Color(0xFF15803D) : const Color(0xFF0284C7);
+    final isCategoryA = product.category == 'Kategori A';
+    final cardBgColor = isCategoryA ? const Color(0xFFDCFCE7) : const Color(0xFFE0F2FE);
+    final accentColor = isCategoryA ? const Color(0xFF059669) : const Color(0xFF0284C7);
     final isOutOfStock = product.stock <= 0;
+    final priceDisplay = product.price > 0 ? _formatRupiah(product.price) : 'Rp —';
 
     return Container(
       decoration: BoxDecoration(
@@ -878,7 +868,7 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                 alignment: Alignment.center,
                 children: [
                   Icon(
-                    isKelapa ? Icons.eco_outlined : Icons.local_drink_outlined,
+                    isCategoryA ? Icons.category_outlined : Icons.widgets_outlined,
                     size: 44,
                     color: accentColor,
                   ),
@@ -953,7 +943,7 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                   Row(
                     children: [
                       Text(
-                        _formatRupiah(product.price),
+                        priceDisplay,
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w900,
@@ -1100,7 +1090,7 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                 style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
               ),
               Text(
-                _formatRupiah(_totalPrice),
+                _totalPrice > 0 ? _formatRupiah(_totalPrice) : 'Rp —',
                 style: const TextStyle(color: Color(0xFF86EFAC), fontSize: 13, fontWeight: FontWeight.w900),
               ),
             ],
