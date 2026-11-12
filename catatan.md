@@ -1,58 +1,75 @@
 # 📝 Catatan Progress Harian & Roadmap Proyek
 **Proyek:** Kasir POS Sarjana Degan Madiun (Offline-First Flutter)  
-**Tanggal Update:** 13 November 2026 (00:50 WIB)  
-**Status Terakhir:** 🏆 OPSI 2 (DASHBOARD OWNER 1 PINTU) + KATALOG MENU NETRAL SELESAI  
-**Repositori GitHub:** [github.com/masdic/kasir-project-sarjanadegaanmdn](https://github.com/masdic/kasir-project-sarjanadegaanmdn) (Branch `main`)  
+**Tanggal Update:** 13 November 2026 (01:00 WIB)  
+**Status Sesi Ini:** 🏆 FASE 6 (DASHBOARD OWNER 1 PINTU + KATALOG MENU NETRAL) SELESAI & LIVE DI HP  
+**Repositori GitHub:** [github.com/masdic/kasir-project-sarjanadegaanmdn](https://github.com/masdic/kasir-project-sarjanadegaanmdn) (Branch `main`, Commit `3aad443`)  
 
 ---
 
-## ✅ Pencapaian yang Sudah Selesai 100%
+## 🛑 Status Akhir Sesi Malam Ini (13 Nov 2026)
+> ⚠️ **Arahan Strategis Mas Dicky:**  
+> Database akan difinalisasi di akhir proyek. Fokus saat ini adalah **Alur Fungsi, Logika Bisnis, dan UI/UX Interaktif**.
 
-| No | Modul / Fitur | Rincian Pencapaian | Status |
-|---|---|---|:---:|
-| 1 | **Dokumen Tugas 1 (PDF)** | Dokumen Analisis Kebutuhan format Majalah (`TUGAS_1_ANALISIS_KEBUTUHAN_KASIR_POS.pdf`) | ✅ Selesai |
-| 2 | **PRD & Master Context** | `prd.md` terstruktur standar ZettBOT v1.11.0 sebagai Single Source of Truth | ✅ Selesai |
-| 3 | **Database SQLite Offline** | Model data: `StoreProfile`, `Product`, `Transaction`, `TransactionItem`, `ProductionLog`, `Expense`, `SupplierDeliveries`, `StockTransfers` | ✅ Selesai |
-| 4 | **Visual Login & Header Asli** | Foto kelapa muda berembun asli + dual shadow + jam realtime WIB anti-overflow | ✅ Selesai |
-| 5 | **Sistem Login 3 Peran (PIN)** | Cabang 1 Alun-Alun (`1234`), Cabang 2 Pasar Besar (`5678`), Owner Dicky (`8888`) | ✅ Selesai |
-| 6 | **Build & Deploy Realme C21Y** | APK Debug mandiri (bebas CMake/NDK) terpasang via ADB ke Realme C21Y fisik | ✅ Selesai |
-| 7 | **Transaksi & Potong Stok** | Modal bayar Tunai/QRIS, kalkulator kembalian, struk digital, potong stok otomatis | ✅ Selesai |
-| 8 | **Distribusi Stok (Pilihan 3)** | Owner kirim stok (`PENDING`) ➔ Kasir verifikasi fisik (`DITERIMA` / `DITERIMA_SELISIH` + alasan wajib) ➔ Stok cabang bertambah atomik | ✅ Selesai (Live HP) |
-| 9 | **UI Shell Menu Kasir Baru** | Tampilan modern adaptasi dashboard grocery (`cashier_menu_screen.dart`): Top bar, Date-Time bar hijau, 3 kartu statistik, chip kategori horizontal, grid produk 2 kolom, dan bottom nav bar 5 tab | ✅ Selesai (Commit `4d36d6b`) |
-| 10 | **Tahap 1: Koneksi Menu ke Database SQLite** | Data produk nyata SQLite terhubung, sisa stok real, tombol `[+]` tambah keranjang belanja interaktif, proteksi stok habis, floating bar keranjang, filter kategori aktif, pencarian instan | ✅ Selesai (Commit `419fd48`) |
-| 11 | **Dashboard 1 Pintu Owner (Opsi 2)** | Konsol eksekutif Mas Dicky (PIN `8888`) memantau total omset gabungan (Tunai vs QRIS), komparasi Cabang 1 vs Cabang 2, dan distribusi stok | ✅ Selesai (Commit `875169b`) |
-| 12 | **Katalog Menu Template Netral** | Penyesuaian sesuai instruksi Mas Dicky: nama produk placeholder (`Menu 1` - `Menu 6`), harga dikosongkan (`Rp —`), kategori netral (`Semua`, `Kategori A`, `Kategori B`), bentuk kartu tetap konsisten | ✅ Selesai |
-
----
-
-## 🚧 Status & Arahan Strategis Mas Dicky
-> ⚠️ **Prinsip Utama:** Database akan difinalisasi di akhir. Fokus saat ini adalah **Alur Fungsi, Logika Bisnis, dan UI/UX**.
-
-1. **Katalog Menu:**
-   - Dibuat netral (`Menu 1` s/d `Menu 6`, harga `Rp —`, kategori `Kategori A` & `B`).
-   - Siap diisi detail menu dan harga belakangan tanpa merusak tata letak kartu.
-2. **Dashboard Owner 1 Pintu (PIN 8888):**
-   - Berhasil live di Realme C21Y dengan filter gabungan serta rincian Cabang 1 vs Cabang 2.
-3. **Layar Kasir Cabang (PIN 1234 & 5678):**
-   - Menampilkan menu kartu dengan sisa stok, pencarian, dan keranjang belanja floating.
+### 🌟 Capaian yang Berhasil Diselesaikan & Diverifikasi di Realme C21Y:
+1. **Dashboard 1 Pintu Owner (Opsi 2 - PIN 8888):**
+   - Layar konsol eksekutif khusus Mas Dicky (`OwnerDashboardScreen`).
+   - Filter segmented 1 pintu: `[Semua Cabang (Konsolidasi)]`, `[Cabang 1 - Alun-Alun]`, `[Cabang 2 - Pasar Besar]`.
+   - Ringkasan omzet lengkap: Pemisahan Tunai (uang fisik kasir) vs QRIS (rekening bank).
+   - Kartu komparasi performa Cabang 1 vs Cabang 2 secara berdampingan.
+   - Pemantauan alokasi stok cabang dan jumlah kiriman kelapa yang masih `PENDING`.
+2. **Revisi Katalog Menu Netral (Layar Kasir):**
+   - Nama produk menggunakan slot placeholder netral: `Menu 1` s/d `Menu 6`.
+   - Harga dikosongkan dan tampil netral: `Rp —` (siap diisi nama & harga riil belakangan).
+   - Kategori netral: `Semua`, `Kategori A`, `Kategori B`.
+   - Bentuk kartu grocery card modern tetap utuh 100% (2 kolom, rounded border, elevation shadow, lencana sisa stok, tombol `[+]` hijau).
+   - Keranjang belanja interaktif aktif: Klik `[+]` memicu badge jumlah item dan floating bar belanja di bawah.
 
 ---
 
-## 🎯 Target Langkah Selanjutnya (Roadmap Eksekusi)
+## 🎯 Agenda Progres Lanjutan untuk Besok
 
-### 🥇 LANGKAH 1: Sambungkan Menu Baru ke Database SQLite
-- Mengganti data dummy produk kelapa & es dengan data tabel `Products`.
-- Mengaktifkan filter kategori dinamis (Semua, Kelapa, Es Cup).
-- Mengaktifkan tombol `[+]` agar memasukkan item ke keranjang kasir.
+Berikut adalah daftar prioritas fitur dan alur logika yang siap dikerjakan saat sesi berlanjut besok:
 
-### 🥈 LANGKAH 2: Dashboard Konsolidasi 1 Pintu untuk Owner
-- Menampilkan total omset harian gabungan di kartu atas saat login sebagai Owner.
-- Menyediakan selector cabang `[Semua] [Cabang 1] [Cabang 2]`.
+### 🥇 AGENDA 1: Alur Quick Checkout / Modal Bayar Langsung dari Layar Menu
+- **Tujuan:** Kasir tidak perlu bolak-balik layar untuk menyelesaikan transaksi cepat.
+- **Rincian Alur & UI/UX:**
+  1. Klik tombol floating bar `[Buka Kasir / Bayar]` memunculkan Bottom Sheet Checkout ringkas.
+  2. Menampilkan rincian item belanja yang dipilih beserta subtotal.
+  3. Pilihan metode pembayaran: `[💵 Tunai]` atau `[📱 QRIS]`.
+  4. Quick Money Button untuk uang tunai pas atau pecahan umum (Rp 10.000, Rp 20.000, Rp 50.000, Rp 100.000) + kalkulator kembalian otomatis.
+  5. Konfirmasi pembayaran ➔ Struk digital & reset keranjang belanja.
 
-### 🥉 LANGKAH 3: Rekapan Harian & 1-Klik Kirim WhatsApp ke Mas Dicky
-- Modal Laporan Tutup Kasir (Kas Awal + Tunai - Pengeluaran = Wajib Setor).
-- Rekap butir kelapa pecah (formula 1 butir = 3 cup es degan).
-- Tombol `[📲 Kirim Rekapan ke WA Mas Dicky]` membuka template chat WA otomatis tanpa perlu cloud backend.
+### 🥈 AGENDA 2: Alur Tutup Kasir / Daily Shift Closing (1-Klik WhatsApp ke Mas Dicky)
+- **Tujuan:** Mempermudah kasir melaporkan rekapan harian ke Mas Dicky di akhir shift secara akurat tanpa cloud backend.
+- **Rincian Alur & UI/UX:**
+  1. Menu Tutup Kasir di akhir shift (Pagi/Sore).
+  2. Input Kas Awal + Penjualan Tunai - Pengeluaran Lapak = **Uang Fisik Wajib Setor**.
+  3. Rekapan butir kelapa pecah vs cup es terjual (formula: 1 butir kelapa = 3 cup es).
+  4. Tombol 1-klik `[📲 Kirim Rekapan ke WhatsApp Mas Dicky]` yang otomatis meng-generate teks chat terformat rapi dan membuka aplikasi WhatsApp Mas Dicky.
+
+### 🥉 AGENDA 3: Fungsionalitas Tab Navigasi Bawah (Stok & Riwayat)
+- **Tujuan:** Mengaktifkan tab bawah pada `CashierMenuScreen` agar navigasi kasir semakin lengkap.
+- **Rincian Alur & UI/UX:**
+  1. **Tab Stok:** Menampilkan sisa stok lapak terkini + tombol cepat untuk `[📦 Verifikasi Kiriman Kelapa dari Owner]`.
+  2. **Tab Riwayat:** Menampilkan riwayat nota/struk transaksi yang terjadi hari ini beserta detail jam dan nominal.
+  3. **Tab Pengaturan:** Profil cabang, pergantian shift, dan tombol logout / kunci layar.
+
+### 📋 AGENDA 4: Pengisian Data Menu & Harga Asli (Opsional saat Mas Dicky Siap)
+- Mengganti placeholder `Menu 1` - `Menu 6` dan `Rp —` dengan daftar menu & harga resmi Sarjana Degan Madiun saat Mas Dicky sudah menghendaki.
+
+---
+
+## 📌 Catatan Teknis & Akses Cepat:
+- **Lokasi Proyek:** `c:\proyek\kasir_pos`
+- **PIN Akses:**
+  - `Cabang 1 (Alun-Alun)`: `1234`
+  - `Cabang 2 (Pasar Besar)`: `5678`
+  - `Owner (Mas Dicky)`: `8888`
+- **Device Target:** Realme C21Y (`1818094110BA0143`)
+- **Perintah Pasang Cepat ke HP:**
+  ```powershell
+  flutter run -d 1818094110BA0143
+  ```
 
 ---
 
