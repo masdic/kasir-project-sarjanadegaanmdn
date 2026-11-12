@@ -403,21 +403,30 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<TransactionModel>> getTransactions({DateTime? date}) async {
+  Future<List<TransactionModel>> getTransactions({DateTime? date, String? outletCode}) async {
     final db = await instance.database;
     String? whereClause;
-    List<dynamic>? whereArgs;
+    List<dynamic> whereArgs = [];
 
     if (date != null) {
       final ymd = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       whereClause = "transactionDate LIKE ?";
-      whereArgs = ['$ymd%'];
+      whereArgs.add('$ymd%');
+    }
+
+    if (outletCode != null && outletCode != 'Semua') {
+      if (whereClause != null) {
+        whereClause += " AND invoiceNumber LIKE ?";
+      } else {
+        whereClause = "invoiceNumber LIKE ?";
+      }
+      whereArgs.add('%$outletCode%');
     }
 
     final txRows = await db.query(
       'Transactions',
       where: whereClause,
-      whereArgs: whereArgs,
+      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
       orderBy: 'id DESC',
     );
 
@@ -511,19 +520,33 @@ class DatabaseHelper {
   // ==========================================
   // RINGKASAN HARIAN (OMZET, PENGELUARAN, KAS BERSIH)
   // ==========================================
-  Future<Map<String, int>> getDailySummary(DateTime date) async {
+  Future<Map<String, int>> getDailySummary(DateTime date, {String? outletCode}) async {
     final db = await instance.database;
     final ymd = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-    // Total Omzet
+    String txWhere = 'transactionDate LIKE ?';
+    List<dynamic> txArgs = ['$ymd%'];
+
+    if (outletCode != null && outletCode != 'Semua') {
+      txWhere += ' AND invoiceNumber LIKE ?';
+      txArgs.add('%$outletCode%');
+    }
+
+    // Total Omzet & Breakdown Tunai vs QRIS
     final txResult = await db.rawQuery('''
-      SELECT SUM(totalAmount) as totalRev, COUNT(id) as totalTx 
+      SELECT 
+        SUM(totalAmount) as totalRev, 
+        COUNT(id) as totalTx,
+        SUM(CASE WHEN paymentMethod = 'TUNAI' THEN totalAmount ELSE 0 END) as totalCash,
+        SUM(CASE WHEN paymentMethod = 'QRIS' THEN totalAmount ELSE 0 END) as totalQris
       FROM Transactions 
-      WHERE transactionDate LIKE ?
-    ''', ['$ymd%']);
+      WHERE $txWhere
+    ''', txArgs);
 
     final totalRev = (txResult.first['totalRev'] as num?)?.toInt() ?? 0;
     final totalTx = (txResult.first['totalTx'] as num?)?.toInt() ?? 0;
+    final totalCash = (txResult.first['totalCash'] as num?)?.toInt() ?? 0;
+    final totalQris = (txResult.first['totalQris'] as num?)?.toInt() ?? 0;
 
     // Total Pengeluaran
     final expResult = await db.rawQuery('''
@@ -538,6 +561,8 @@ class DatabaseHelper {
     return {
       'totalRevenue': totalRev,
       'transactionCount': totalTx,
+      'totalCash': totalCash,
+      'totalQris': totalQris,
       'totalExpenses': totalExp,
       'netCash': netCash,
     };

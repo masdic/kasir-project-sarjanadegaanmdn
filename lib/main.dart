@@ -5,6 +5,7 @@ import 'package:kasir_pos/assets/coconut_image.dart';
 
 import 'screens/cashier_pos_screen.dart';
 import 'screens/cashier_menu_screen.dart';
+import 'screens/owner_dashboard_screen.dart';
 
 void main() {
   runApp(const KasirPinApp());
@@ -238,16 +239,25 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       Future.delayed(const Duration(milliseconds: 600), () {
         if (!mounted) return;
         setState(() => _enteredPin = '');
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CashierMenuScreen(
-              branchName: branch,
-              shiftName: shift,
-              isOwner: isOwner,
+        if (isOwner) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const OwnerDashboardScreen(),
             ),
-          ),
-        );
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CashierMenuScreen(
+                branchName: branch,
+                shiftName: shift,
+                isOwner: false,
+              ),
+            ),
+          );
+        }
       });
     } else {
       setState(() {

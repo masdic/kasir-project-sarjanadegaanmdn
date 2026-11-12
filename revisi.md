@@ -1,33 +1,38 @@
 # RENCANA IMPLEMENTASI (revisi.md)
-# FASE 6 - TAHAP 1: KONEKSI DATABASE SQLITE KE MENU KASIR BARU & SISTEM KERANJANG
+# FASE 6 - TAHAP 2: DASHBOARD 1 PINTU OWNER (MAS DICKY - PIN 8888)
 ================================================================================
 STATUS: SEDANG DIKERJAKAN (IN PROGRESS)
-TANGGAL: 12 November 2026
-TARGET: Hubungkan CashierMenuScreen ke SQLite Products, Kartu Statistik Real, Filter Kategori, & Tombol Tambah Belanja [+]
+TANGGAL: 13 November 2026
+TARGET: Bangun Layar Khusus OwnerDashboardScreen untuk Pantau Omset Gabungan & Stok Cabang 1 & Cabang 2
 ================================================================================
 
-## 1. Lingkup Pekerjaan Tahap 1
-Fokus 100% pada Tahap 1 sesuai instruksi Mas Dicky:
-1. **Load Data Produk Real:**
-   - Membaca data langsung dari tabel SQLite `Products` via `DatabaseHelper.instance.getProducts()`.
-   - Menampilkan stok butir/cup secara nyata dari database.
-2. **Kalkulasi Kartu Statistik Real-time:**
-   - *Penjualan Hari Ini*: Total Rupiah transaksi hari ini di cabang aktif (`Transactions`).
-   - *Stok Tersedia*: Total akumulasi butir kelapa & cup tersedia di lapak.
-   - *Transaksi*: Total jumlah nota yang berhasil dicetak hari ini.
-3. **Filter Kategori & Pencarian Aktif:**
-   - Chip kategori (`Semua`, `Kelapa`, `Es Cup`) memfilter produk secara instan.
-   - Kolom pencarian di Top Bar menyaring produk berdasarkan nama atau kode menu.
-4. **Fungsionalitas Tombol Belanja `[+]`:**
-   - Klik `[+]` pada kartu produk memasukkan item ke dalam keranjang (`_cart`).
-   - Proteksi stok: jika stok 0, tombol memberikan feedback peringatan stok habis.
-   - Menampilkan indikator keranjang belanja (Floating Cart Bar) di bawah dengan ringkasan: `Total Item • Total Rp` dan tombol aksi cepat untuk lanjut bayar atau buka Kasir POS.
-5. **Navigasi Tab Kasir:**
-   - Bottom Nav tab `Kasir` langsung membuka antarmuka kasir `CashierPosScreen`.
+## 1. Lingkup Pekerjaan Opsi 2 (Khusus Owner 8888)
+Fokus 100% pada Opsi 2 sesuai instruksi:
+1. **Layar Mandiri `OwnerDashboardScreen` (`lib/screens/owner_dashboard_screen.dart`):**
+   - Dibuka otomatis saat login sebagai Owner (PIN `8888`).
+   - Header bertema Royal Emerald/Amber (`👑 Pemilik Usaha - Mas Dicky`).
+2. **Selektor 1 Pintu (Segmented Filter):**
+   - Tombol Filter: `[Semua Cabang (Konsolidasi)]`, `[Cabang 1 - Alun-Alun]`, `[Cabang 2 - Pasar Besar]`.
+   - Data omzet, transaksi, dan histori otomatis tersaring sesuai cabang yang dipilih.
+3. **Kartu Metrik Finansial Konsolidasi:**
+   - Total Omzet Penjualan (Rupiah).
+   - Pemisahan Pembayaran: Total Tunai (Fisik di kasir) vs Total QRIS (Masuk rekening).
+   - Total Transaksi & Estimasi Kas Bersih.
+4. **Pemantauan Stok & Kiriman Kelapa Terpusat:**
+   - Stok live seluruh produk (Kelapa Utuh, Wulung, Kupas, Es Cup).
+   - Status Kiriman / Distribusi Stok (`StockTransfers`): Memantau berapa butir yang sedang dikirim (`PENDING`) dan berapa yang sudah sampai di lapak kasir.
+   - Tombol cepat `[👑 Kirim Kelapa ke Cabang]`.
+5. **Daftar Transaksi Lintas Cabang:**
+   - Menampilkan transaksi terbaru dengan lencana cabang (`SD01` vs `SD02`).
+6. **Routing di `lib/main.dart`:**
+   - Login Owner (PIN `8888`) langsung membuka `OwnerDashboardScreen`.
+   - Kasir (PIN `1234` / `5678`) tetap membuka `CashierMenuScreen`.
 
 ---
 
-## 2. Berkas yang Dimodifikasi
+## 2. Berkas yang Dimodifikasi & Dibuat
 | No | Berkas | Aksi | Keterangan |
 |---|---|---|---|
-| 1 | `lib/screens/cashier_menu_screen.dart` | Modifikasi | Koneksi `DatabaseHelper`, `Product`, filter dinamis, keranjang aktif, dan floating checkout bar |
+| 1 | `lib/database/database_helper.dart` | Modifikasi | Tambah parameter filter outlet pada `getDailySummary` dan breakdown Tunai/QRIS |
+| 2 | `lib/screens/owner_dashboard_screen.dart` | Baru | Layar Dashboard 1 Pintu Owner lengkap dengan konsolidasi cabang |
+| 3 | `lib/main.dart` | Modifikasi | Arahkan login Owner (`8888`) langsung ke `OwnerDashboardScreen` |
