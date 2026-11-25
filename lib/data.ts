@@ -42,6 +42,37 @@ export const STORE = {
   footer: "Terima Kasih Atas Kunjungan Anda",
 };
 
+export type Branch = {
+  id: number;
+  name: string;
+  area: string;
+  address: string;
+  todayRevenue: number;
+  todayTransactions: number;
+  lowStockItems: number;
+};
+
+export const BRANCHES: Branch[] = [
+  {
+    id: 1,
+    name: "Cabang 1",
+    area: "Alun-Alun Madiun",
+    address: "Jl. Pahlawan No. 12, Madiun",
+    todayRevenue: 486000,
+    todayTransactions: 38,
+    lowStockItems: 2,
+  },
+  {
+    id: 2,
+    name: "Cabang 2",
+    area: "Pasar Besar",
+    address: "Jl. Sudirman No. 45, Madiun",
+    todayRevenue: 312000,
+    todayTransactions: 26,
+    lowStockItems: 1,
+  },
+];
+
 export const PRODUCTS: Product[] = [
   { id: 1, code: "PRD-001", name: "Kelapa Muda Ijo", category: "Kelapa", price: 12000, stock: 24, unit: "Butir" },
   { id: 2, code: "PRD-002", name: "Kelapa Kupas", category: "Kelapa", price: 15000, stock: 8, unit: "Butir" },

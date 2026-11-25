@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Boxes, ReceiptText, ShoppingCart, Wallet } from "lucide-react";
+import { BarChart3, Boxes, LogOut, ReceiptText, ShoppingCart, Wallet } from "lucide-react";
 import { STORE } from "@/lib/data";
 import { HeaderClock } from "@/components/header-clock";
 
@@ -57,7 +57,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <p className="truncate text-sm font-semibold md:text-base">{STORE.branch}</p>
             <p className="truncate text-xs text-muted-foreground">{STORE.address}</p>
           </div>
-          <HeaderClock />
+          <div className="flex items-center gap-4">
+            <HeaderClock />
+            <Link
+              href="/login"
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
+            >
+              <LogOut className="size-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Keluar</span>
+            </Link>
+          </div>
         </header>
 
         <main className="flex-1 pb-20 md:pb-0">{children}</main>
