@@ -26,7 +26,7 @@ export function KasirLogin() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <fieldset>
         <legend className="text-sm font-medium">Cabang</legend>
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -35,7 +35,7 @@ export function KasirLogin() {
             return (
               <label
                 key={branch.id}
-                className={`flex cursor-pointer flex-col gap-1 rounded-xl border p-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary ${
+                className={`flex cursor-pointer flex-col gap-0.5 rounded-xl border px-3 py-2.5 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary ${
                   selected ? "border-primary bg-primary-soft" : "border-border bg-card hover:bg-muted"
                 }`}
               >
@@ -60,7 +60,7 @@ export function KasirLogin() {
         </div>
       </fieldset>
 
-      <div>
+      <div className="flex items-center justify-between">
         <p id="pin-label" className="text-sm font-medium">
           PIN Kasir
         </p>
@@ -68,7 +68,7 @@ export function KasirLogin() {
           role="status"
           aria-labelledby="pin-label"
           aria-live="polite"
-          className="mt-3 flex justify-center gap-3"
+          className="flex gap-2.5"
         >
           <span className="sr-only">{`${pin.length} dari ${PIN_MAX} digit terisi`}</span>
           {Array.from({ length: PIN_MAX }, (_, index) => (
@@ -96,7 +96,7 @@ export function KasirLogin() {
         disabled={!canSubmit}
         className="h-12 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
       >
-        Masuk ke Kasir
+        {`Masuk ke ${BRANCHES.find((branch) => branch.id === branchId)?.name ?? "Kasir"}`}
       </button>
     </div>
   );

@@ -13,7 +13,7 @@ type PinPadProps = {
 const DIGITS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
 const keyClass =
-  "flex h-14 items-center justify-center rounded-xl border border-border bg-card text-xl font-semibold transition-colors hover:bg-muted active:bg-primary-soft";
+  "flex h-11 items-center justify-center rounded-xl border border-border bg-card text-lg font-semibold transition-colors hover:bg-muted active:bg-primary-soft focus-visible:outline-2 focus-visible:outline-primary";
 
 export function PinPad({ onDigit, onDelete, onClear, onSubmit }: PinPadProps) {
   const handleKey = useEffectEvent((event: KeyboardEvent) => {
