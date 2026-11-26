@@ -47,6 +47,8 @@ class DatabaseHelper {
           await dir.create(recursive: true);
         }
       }
+    } else if (kIsWeb) {
+      path = inMemoryDatabasePath;
     } else {
       final dbPath = await getDatabasesPath();
       path = join(dbPath, filePath);
@@ -403,30 +405,21 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<TransactionModel>> getTransactions({DateTime? date, String? outletCode}) async {
+  Future<List<TransactionModel>> getTransactions({DateTime? date}) async {
     final db = await instance.database;
     String? whereClause;
-    List<dynamic> whereArgs = [];
+    List<dynamic>? whereArgs;
 
     if (date != null) {
       final ymd = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       whereClause = "transactionDate LIKE ?";
-      whereArgs.add('$ymd%');
-    }
-
-    if (outletCode != null && outletCode != 'Semua') {
-      if (whereClause != null) {
-        whereClause += " AND invoiceNumber LIKE ?";
-      } else {
-        whereClause = "invoiceNumber LIKE ?";
-      }
-      whereArgs.add('%$outletCode%');
+      whereArgs = ['$ymd%'];
     }
 
     final txRows = await db.query(
       'Transactions',
       where: whereClause,
-      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+      whereArgs: whereArgs,
       orderBy: 'id DESC',
     );
 
@@ -520,33 +513,19 @@ class DatabaseHelper {
   // ==========================================
   // RINGKASAN HARIAN (OMZET, PENGELUARAN, KAS BERSIH)
   // ==========================================
-  Future<Map<String, int>> getDailySummary(DateTime date, {String? outletCode}) async {
+  Future<Map<String, int>> getDailySummary(DateTime date) async {
     final db = await instance.database;
     final ymd = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-    String txWhere = 'transactionDate LIKE ?';
-    List<dynamic> txArgs = ['$ymd%'];
-
-    if (outletCode != null && outletCode != 'Semua') {
-      txWhere += ' AND invoiceNumber LIKE ?';
-      txArgs.add('%$outletCode%');
-    }
-
-    // Total Omzet & Breakdown Tunai vs QRIS
+    // Total Omzet
     final txResult = await db.rawQuery('''
-      SELECT 
-        SUM(totalAmount) as totalRev, 
-        COUNT(id) as totalTx,
-        SUM(CASE WHEN paymentMethod = 'TUNAI' THEN totalAmount ELSE 0 END) as totalCash,
-        SUM(CASE WHEN paymentMethod = 'QRIS' THEN totalAmount ELSE 0 END) as totalQris
+      SELECT SUM(totalAmount) as totalRev, COUNT(id) as totalTx 
       FROM Transactions 
-      WHERE $txWhere
-    ''', txArgs);
+      WHERE transactionDate LIKE ?
+    ''', ['$ymd%']);
 
     final totalRev = (txResult.first['totalRev'] as num?)?.toInt() ?? 0;
     final totalTx = (txResult.first['totalTx'] as num?)?.toInt() ?? 0;
-    final totalCash = (txResult.first['totalCash'] as num?)?.toInt() ?? 0;
-    final totalQris = (txResult.first['totalQris'] as num?)?.toInt() ?? 0;
 
     // Total Pengeluaran
     final expResult = await db.rawQuery('''
@@ -561,10 +540,80 @@ class DatabaseHelper {
     return {
       'totalRevenue': totalRev,
       'transactionCount': totalTx,
-      'totalCash': totalCash,
-      'totalQris': totalQris,
       'totalExpenses': totalExp,
       'netCash': netCash,
+    };
+  }
+
+  // ==========================================
+  // HITUNG KAS & SETORAN FISIK KE MAS DICKY (FASE 6)
+  // Rumus: Modal Awal + Omzet Tunai - Pengeluaran Lapak
+  // ==========================================
+  Future<Map<String, dynamic>> getShiftCashSettlement({
+    DateTime? date,
+    int initialCash = 100000,
+  }) async {
+    final db = await instance.database;
+    final targetDate = date ?? DateTime.now();
+    final ymd = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+
+    // 1. Penjualan Tunai
+    final cashResult = await db.rawQuery('''
+      SELECT SUM(totalAmount) as totalCash, COUNT(id) as countCash 
+      FROM Transactions 
+      WHERE transactionDate LIKE ? AND paymentMethod = 'Tunai'
+    ''', ['$ymd%']);
+
+    final totalCash = (cashResult.first['totalCash'] as num?)?.toInt() ?? 0;
+    final countCash = (cashResult.first['countCash'] as num?)?.toInt() ?? 0;
+
+    // 2. Penjualan QRIS (Non-Tunai / Langsung Rekening Mas Dicky)
+    final qrisResult = await db.rawQuery('''
+      SELECT SUM(totalAmount) as totalQris, COUNT(id) as countQris 
+      FROM Transactions 
+      WHERE transactionDate LIKE ? AND paymentMethod = 'QRIS'
+    ''', ['$ymd%']);
+
+    final totalQris = (qrisResult.first['totalQris'] as num?)?.toInt() ?? 0;
+    final countQris = (qrisResult.first['countQris'] as num?)?.toInt() ?? 0;
+
+    // 3. Total Pengeluaran Kas Kecil Lapak
+    final expResult = await db.rawQuery('''
+      SELECT SUM(amount) as totalExp 
+      FROM Expenses 
+      WHERE expenseDate LIKE ?
+    ''', ['$ymd%']);
+
+    final totalExp = (expResult.first['totalExp'] as num?)?.toInt() ?? 0;
+
+    // 4. Hitung Setoran Uang Fisik Sesuai Rumus Resmi Mas Dicky:
+    // Uang Fisik Wajib Setor = Modal Awal + Omzet Tunai - Pengeluaran Lapak
+    final physicalCashToDeposit = initialCash + totalCash - totalExp;
+
+    // 5. Total Omzet Gabungan
+    final totalRevenue = totalCash + totalQris;
+    final totalTransactions = countCash + countQris;
+
+    // 6. Cek Sisa Stok Kelapa & Konversi Es Cup
+    final stockResult = await db.rawQuery('''
+      SELECT SUM(stock) as coconutStock 
+      FROM Products 
+      WHERE category = 'Kelapa'
+    ''');
+    final coconutStock = (stockResult.first['coconutStock'] as num?)?.toInt() ?? 0;
+
+    return {
+      'date': ymd,
+      'initialCash': initialCash,
+      'cashRevenue': totalCash,
+      'cashTxCount': countCash,
+      'qrisRevenue': totalQris,
+      'qrisTxCount': countQris,
+      'totalExpenses': totalExp,
+      'totalRevenue': totalRevenue,
+      'transactionCount': totalTransactions,
+      'depositCash': physicalCashToDeposit,
+      'coconutStock': coconutStock,
     };
   }
 

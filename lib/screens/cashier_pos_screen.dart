@@ -4,6 +4,7 @@ import '../models/product.dart';
 import '../models/transaction_model.dart';
 import '../models/transaction_item.dart';
 import '../database/database_helper.dart';
+import 'cash_settlement_sheet.dart';
 
 /// Layar Utama Kasir POS Sarjana Degan Madiun
 /// Desain Responsif: Split-Screen untuk Tablet / Desktop & Fallback Mobile
@@ -373,9 +374,9 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
                     ],
                   ),
                   const Spacer(),
-                  // Sesi Kasir Chip
+                  // Sesi Kasir & Shift Chip
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(20),
@@ -384,12 +385,12 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.person_outline, size: 13, color: Color(0xFF15803D)),
-                        const SizedBox(width: 4),
+                        const Icon(Icons.person_outline, size: 14, color: Color(0xFF15803D)),
+                        const SizedBox(width: 6),
                         Text(
-                          widget.branchName,
+                          '${widget.branchName} • Shift ${widget.shiftName}',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF334155),
                           ),
@@ -397,34 +398,53 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Jam Realtime (Hanya tampil di tablet / desktop >= 720px)
-                  if (MediaQuery.of(context).size.width >= 720) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.access_time, size: 13, color: Color(0xFF059669)),
-                          const SizedBox(width: 6),
-                          Text(
-                            _formatDateTime(_currentDateTime),
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF065F46),
-                            ),
+                  const SizedBox(width: 12),
+                  // Jam Realtime
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.access_time, size: 13, color: Color(0xFF059669)),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatDateTime(_currentDateTime),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF065F46),
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Tombol Hitung Kas & Setoran Tutup Shift
+                  IconButton(
+                    tooltip: 'Hitung Kas & Setoran Tutup Shift',
+                    onPressed: () {
+                      CashSettlementSheet.show(
+                        context,
+                        branchName: widget.branchName,
+                        shiftName: widget.shiftName,
+                        isOwner: widget.isOwner,
+                      );
+                    },
+                    icon: const Icon(Icons.point_of_sale_rounded, size: 20, color: Color(0xFF059669)),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFDCFCE7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: const BorderSide(color: Color(0xFFA7F3D0)),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                  ],
+                  ),
+                  const SizedBox(width: 8),
                   // Tombol Logout / Kunci
                   IconButton(
                     tooltip: 'Kunci Layar Kasir',
@@ -491,115 +511,55 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Filter Kategori & Pencarian
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 550;
-              if (isNarrow) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: 38,
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (_) => _applyFilter(),
-                        style: const TextStyle(fontSize: 12.5),
-                        decoration: InputDecoration(
-                          hintText: 'Cari menu...',
-                          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                          prefixIcon: const Icon(Icons.search, size: 16, color: Color(0xFF94A3B8)),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.close, size: 14),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    _applyFilter();
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: const BorderSide(color: Color(0xFF15803D), width: 1.5),
-                          ),
-                        ),
-                      ),
+          Row(
+            children: [
+              // Kategori Pills
+              _buildCategoryPill('Semua'),
+              const SizedBox(width: 8),
+              _buildCategoryPill('Kelapa'),
+              const SizedBox(width: 8),
+              _buildCategoryPill('Es Cup'),
+              const Spacer(),
+              // Kolom Pencarian Cepat
+              SizedBox(
+                width: 220,
+                height: 38,
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (_) => _applyFilter(),
+                  style: const TextStyle(fontSize: 12.5),
+                  decoration: InputDecoration(
+                    hintText: 'Cari menu...',
+                    hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                    prefixIcon: const Icon(Icons.search, size: 16, color: Color(0xFF94A3B8)),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close, size: 14),
+                            onPressed: () {
+                              _searchController.clear();
+                              _applyFilter();
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                     ),
-                    const SizedBox(height: 10),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildCategoryPill('Semua'),
-                          const SizedBox(width: 8),
-                          _buildCategoryPill('Kelapa'),
-                          const SizedBox(width: 8),
-                          _buildCategoryPill('Es Cup'),
-                        ],
-                      ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                     ),
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  _buildCategoryPill('Semua'),
-                  const SizedBox(width: 8),
-                  _buildCategoryPill('Kelapa'),
-                  const SizedBox(width: 8),
-                  _buildCategoryPill('Es Cup'),
-                  const Spacer(),
-                  SizedBox(
-                    width: 220,
-                    height: 38,
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) => _applyFilter(),
-                      style: const TextStyle(fontSize: 12.5),
-                      decoration: InputDecoration(
-                        hintText: 'Cari menu...',
-                        hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                        prefixIcon: const Icon(Icons.search, size: 16, color: Color(0xFF94A3B8)),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.close, size: 14),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _applyFilter();
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: const BorderSide(color: Color(0xFF15803D), width: 1.5),
-                        ),
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: Color(0xFF15803D), width: 1.5),
                     ),
                   ),
-                ],
-              );
-            },
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           // Sub-Header Katalog & Aksi Stok Masuk (Distribusi Owner / Kasir)
@@ -824,6 +784,7 @@ class _CashierPosScreenState extends State<CashierPosScreen> {
 
     return Material(
       color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
