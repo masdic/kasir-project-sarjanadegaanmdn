@@ -8,6 +8,7 @@ class Product {
   final int stock;
   final String unit;
   final bool isActive;
+  final String? imagePath;
 
   Product({
     this.id,
@@ -19,6 +20,7 @@ class Product {
     this.stock = 0,
     this.unit = 'Butir',
     this.isActive = true,
+    this.imagePath,
   });
 
   Map<String, dynamic> toMap() {
@@ -32,6 +34,7 @@ class Product {
       'stock': stock,
       'unit': unit,
       'isActive': isActive ? 1 : 0,
+      'imagePath': imagePath,
     };
   }
 
@@ -46,6 +49,7 @@ class Product {
       stock: (map['stock'] as num?)?.toInt() ?? 0,
       unit: map['unit'] as String? ?? 'Butir',
       isActive: (map['isActive'] as int? ?? 1) == 1,
+      imagePath: map['imagePath'] as String?,
     );
   }
 
@@ -59,6 +63,7 @@ class Product {
     int? stock,
     String? unit,
     bool? isActive,
+    String? imagePath,
   }) {
     return Product(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class Product {
       stock: stock ?? this.stock,
       unit: unit ?? this.unit,
       isActive: isActive ?? this.isActive,
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 }

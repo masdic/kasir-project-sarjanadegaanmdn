@@ -94,6 +94,22 @@ class DatabaseHelper {
       )
     ''');
 
+    // Tabel AppSettings (Penyimpanan permanen preferensi notifikasi & nada dering)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS AppSettings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+
+    // Pastikan kolom imagePath tersedia pada tabel Products (migrasi aman)
+    try {
+      await db.execute('ALTER TABLE Products ADD COLUMN imagePath TEXT');
+    } catch (_) {}
+
+    // Sinkronkan 21 menu resmi Sarjana Degan dari papan menu
+    await _syncOfficialMenu(db);
+
     return db;
   }
 
@@ -121,7 +137,8 @@ class DatabaseHelper {
         costPrice INTEGER DEFAULT 0,
         stock INTEGER NOT NULL DEFAULT 0,
         unit TEXT DEFAULT 'Pcs',
-        isActive INTEGER DEFAULT 1
+        isActive INTEGER DEFAULT 1,
+        imagePath TEXT
       )
     ''');
 
@@ -181,6 +198,41 @@ class DatabaseHelper {
     await _seedInitialData(db);
   }
 
+  static const List<Map<String, dynamic>> officialMenuCatalog = [
+    {'productCode': 'SD-001', 'name': 'Es Degan Gula Merah', 'category': 'Es Degan Cup', 'price': 6000, 'costPrice': 2500, 'stock': 50, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_gula_merah.jpg'},
+    {'productCode': 'SD-002', 'name': 'Es Degan Gula Putih', 'category': 'Es Degan Cup', 'price': 6000, 'costPrice': 2500, 'stock': 50, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_gula_putih.jpg'},
+    {'productCode': 'SD-003', 'name': 'Es Degan Original', 'category': 'Es Degan Cup', 'price': 6000, 'costPrice': 2000, 'stock': 50, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_original.jpg'},
+    {'productCode': 'SD-004', 'name': 'Es Degan Melon', 'category': 'Es Degan Cup', 'price': 9000, 'costPrice': 3500, 'stock': 40, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_melon.jpg'},
+    {'productCode': 'SD-005', 'name': 'Es Degan Vanila', 'category': 'Es Degan Cup', 'price': 9000, 'costPrice': 3500, 'stock': 40, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_vanila.jpg'},
+    {'productCode': 'SD-006', 'name': 'Air Kelapa 500ml', 'category': 'Air Kelapa & Morong', 'price': 8000, 'costPrice': 4000, 'stock': 30, 'unit': 'Botol', 'isActive': 1, 'imagePath': 'assets/images/menu/air_kelapa_500ml.jpg'},
+    {'productCode': 'SD-007', 'name': 'Air Kelapa 1L', 'category': 'Air Kelapa & Morong', 'price': 15000, 'costPrice': 7500, 'stock': 25, 'unit': 'Botol', 'isActive': 1, 'imagePath': 'assets/images/menu/air_kelapa_1l.jpg'},
+    {'productCode': 'SD-008', 'name': 'Es Degan Jeruk', 'category': 'Es Degan Cup', 'price': 8000, 'costPrice': 3500, 'stock': 40, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_jeruk.jpg'},
+    {'productCode': 'SD-009', 'name': 'Es Teller Sarjana', 'category': 'Es Degan Cup', 'price': 10000, 'costPrice': 4500, 'stock': 35, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_teller_sarjana.jpg'},
+    {'productCode': 'SD-010', 'name': 'Es Degan Susu', 'category': 'Es Degan Cup', 'price': 9000, 'costPrice': 3500, 'stock': 40, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_susu.jpg'},
+    {'productCode': 'SD-011', 'name': 'Es Degan Tropical', 'category': 'Es Degan Cup', 'price': 8000, 'costPrice': 3500, 'stock': 35, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_tropical.jpg'},
+    {'productCode': 'SD-012', 'name': 'Degan Utuh Besar', 'category': 'Degan Utuh & Kupas', 'price': 15000, 'costPrice': 9500, 'stock': 48, 'unit': 'Butir', 'isActive': 1, 'imagePath': 'assets/images/menu/degan_utuh_besar.jpg'},
+    {'productCode': 'SD-013', 'name': 'Degan Utuh Kecil', 'category': 'Degan Utuh & Kupas', 'price': 12000, 'costPrice': 7500, 'stock': 40, 'unit': 'Butir', 'isActive': 1, 'imagePath': 'assets/images/menu/degan_utuh_kecil.jpg'},
+    {'productCode': 'SD-014', 'name': 'Kelapa Sereh/Ijo', 'category': 'Degan Utuh & Kupas', 'price': 22000, 'costPrice': 14000, 'stock': 20, 'unit': 'Butir', 'isActive': 1, 'imagePath': 'assets/images/menu/kelapa_sereh_ijo.jpg'},
+    {'productCode': 'SD-015', 'name': 'Es Degan Cocopandan', 'category': 'Es Degan Cup', 'price': 9000, 'costPrice': 3500, 'stock': 40, 'unit': 'Cup', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_cocopandan.jpg'},
+    {'productCode': 'SD-016', 'name': 'Es Degan Satu Morong', 'category': 'Air Kelapa & Morong', 'price': 15000, 'costPrice': 6500, 'stock': 20, 'unit': 'Morong', 'isActive': 1, 'imagePath': 'assets/images/menu/es_degan_satu_morong.jpg'},
+    {'productCode': 'SD-017', 'name': 'Es Teller Satu Morong', 'category': 'Air Kelapa & Morong', 'price': 25000, 'costPrice': 11000, 'stock': 15, 'unit': 'Morong', 'isActive': 1, 'imagePath': 'assets/images/menu/es_teller_satu_morong.jpg'},
+    {'productCode': 'SD-018', 'name': 'Degan Kupas', 'category': 'Degan Utuh & Kupas', 'price': 13000, 'costPrice': 8000, 'stock': 30, 'unit': 'Butir', 'isActive': 1, 'imagePath': 'assets/images/menu/degan_kupas.jpg'},
+    {'productCode': 'SD-019', 'name': 'Degan Jelly Ori', 'category': 'Menu Spesial', 'price': 15000, 'costPrice': 7000, 'stock': 20, 'unit': 'Porsi', 'isActive': 1, 'imagePath': 'assets/images/menu/degan_jelly_ori.jpg'},
+    {'productCode': 'SD-020', 'name': 'Degan Jelly Buah', 'category': 'Menu Spesial', 'price': 25000, 'costPrice': 12000, 'stock': 15, 'unit': 'Porsi', 'isActive': 1, 'imagePath': 'assets/images/menu/degan_jelly_buah.jpg'},
+    {'productCode': 'SD-021', 'name': 'Es Teler Kelapa Muda', 'category': 'Menu Spesial', 'price': 20000, 'costPrice': 9500, 'stock': 15, 'unit': 'Porsi', 'isActive': 1, 'imagePath': 'assets/images/menu/es_teler_kelapa_muda.jpg'},
+  ];
+
+  Future<void> _syncOfficialMenu(Database db) async {
+    final existing = await db.query('Products', where: 'productCode = ?', whereArgs: ['SD-001'], limit: 1);
+    if (existing.isEmpty) {
+      // Nonaktifkan produk sample lama (PRD-001..PRD-007) agar kasir langsung melihat 21 menu resmi
+      await db.update('Products', {'isActive': 0}, where: 'productCode LIKE ?', whereArgs: ['PRD-%']);
+      for (final prod in officialMenuCatalog) {
+        await db.insert('Products', prod, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    }
+  }
+
   Future<void> _seedInitialData(Database db) async {
     // 1. Identitas Default Cabang 1
     await db.insert('StoreProfile', {
@@ -191,83 +243,26 @@ class DatabaseHelper {
       'receiptFooter': 'Terima Kasih! Segarnya Kelapa Alami Tanpa Pemanis Buatan.',
     });
 
-    // 2. Sample Master Produk
-    final initialProducts = [
-      {
-        'productCode': 'PRD-001',
-        'name': 'Kelapa Muda Ijo Utuh',
-        'category': 'Kelapa',
-        'price': 12000,
-        'costPrice': 8000,
-        'stock': 50,
-        'unit': 'Butir',
-        'isActive': 1,
-      },
-      {
-        'productCode': 'PRD-002',
-        'name': 'Kelapa Muda Wulung',
-        'category': 'Kelapa',
-        'price': 15000,
-        'costPrice': 10000,
-        'stock': 30,
-        'unit': 'Butir',
-        'isActive': 1,
-      },
-      {
-        'productCode': 'PRD-003',
-        'name': 'Kelapa Kupas Siap Minum',
-        'category': 'Kelapa',
-        'price': 14000,
-        'costPrice': 8500,
-        'stock': 25,
-        'unit': 'Butir',
-        'isActive': 1,
-      },
-      {
-        'productCode': 'PRD-004',
-        'name': 'Es Degan Gula Jawa',
-        'category': 'Es Cup',
-        'price': 6000,
-        'costPrice': 2500,
-        'stock': 60,
-        'unit': 'Cup',
-        'isActive': 1,
-      },
-      {
-        'productCode': 'PRD-005',
-        'name': 'Es Degan Sirup Merah',
-        'category': 'Es Cup',
-        'price': 6000,
-        'costPrice': 2500,
-        'stock': 40,
-        'unit': 'Cup',
-        'isActive': 1,
-      },
-      {
-        'productCode': 'PRD-006',
-        'name': 'Es Degan Original Murni',
-        'category': 'Es Cup',
-        'price': 5000,
-        'costPrice': 2000,
-        'stock': 30,
-        'unit': 'Cup',
-        'isActive': 1,
-      },
-      {
-        'productCode': 'PRD-007',
-        'name': 'Es Degan Susu',
-        'category': 'Es Cup',
-        'price': 7000,
-        'costPrice': 3000,
-        'stock': 20,
-        'unit': 'Cup',
-        'isActive': 1,
-      },
-    ];
-
-    for (final prod in initialProducts) {
+    // 2. 21 Menu Resmi Papan Sarjana Degan
+    for (final prod in officialMenuCatalog) {
       await db.insert('Products', prod);
     }
+  }
+
+  Future<String?> getSetting(String key) async {
+    final db = await instance.database;
+    final rows = await db.query('AppSettings', where: 'key = ?', whereArgs: [key], limit: 1);
+    if (rows.isEmpty) return null;
+    return rows.first['value'] as String?;
+  }
+
+  Future<void> setSetting(String key, String value) async {
+    final db = await instance.database;
+    await db.insert(
+      'AppSettings',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   // ==========================================
@@ -598,7 +593,7 @@ class DatabaseHelper {
     final stockResult = await db.rawQuery('''
       SELECT SUM(stock) as coconutStock 
       FROM Products 
-      WHERE category = 'Kelapa'
+      WHERE unit = 'Butir' AND isActive = 1
     ''');
     final coconutStock = (stockResult.first['coconutStock'] as num?)?.toInt() ?? 0;
 
@@ -614,6 +609,38 @@ class DatabaseHelper {
       'transactionCount': totalTransactions,
       'depositCash': physicalCashToDeposit,
       'coconutStock': coconutStock,
+    };
+  }
+
+  /// Ringkasan Keuangan & Estimasi Laba Kotor Khusus Owner
+  Future<Map<String, dynamic>> getOwnerProfitSummary({DateTime? date}) async {
+    final db = await instance.database;
+    final targetDate = date ?? DateTime.now();
+    final ymd =
+        '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+
+    final settlement = await getShiftCashSettlement(date: targetDate);
+
+    // Hitung total HPP (Cost of Goods Sold) dari item terjual hari ini
+    final cogsResult = await db.rawQuery('''
+      SELECT SUM(ti.quantity * COALESCE(p.costPrice, 0)) as totalCogs
+      FROM TransactionItems ti
+      INNER JOIN Transactions t ON ti.transactionId = t.id
+      LEFT JOIN Products p ON ti.productId = p.id
+      WHERE t.transactionDate LIKE ?
+    ''', ['$ymd%']);
+
+    final totalCogs = (cogsResult.first['totalCogs'] as num?)?.toInt() ?? 0;
+    final totalRevenue = settlement['totalRevenue'] as int? ?? 0;
+    final totalExpenses = settlement['totalExpenses'] as int? ?? 0;
+    final grossProfit = totalRevenue - totalCogs;
+    final netProfit = grossProfit - totalExpenses;
+
+    return {
+      ...settlement,
+      'totalCogs': totalCogs,
+      'grossProfit': grossProfit,
+      'netProfit': netProfit,
     };
   }
 

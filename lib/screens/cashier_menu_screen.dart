@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'cashier_pos_screen.dart';
 import 'cash_settlement_sheet.dart';
 import '../database/database_helper.dart';
+import '../models/product.dart';
+import '../services/sound_service.dart';
 
 /// Layar Dashboard Menu Utama - Sarjana Degan POS Madiun
 /// Desain UI/UX: Terinspirasi dari Chili POS Modern Clean (Off-White, Emerald Green, Card UI)
@@ -35,6 +38,9 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
   bool _notifStockIncoming = true;
   bool _notifAdminOrders = true;
   bool _notifSoundChime = true;
+  String _soundPreset = 'chime';
+  String _ringtoneUri = '';
+  String _ringtoneTitle = 'Ting! Kasir Bawaan';
 
   // ── Data Real-time SQLite Kasir & Setoran ─────────────────────────────────
   int _liveDepositCash = 100000;
@@ -42,6 +48,8 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
   int _liveQrisRevenue = 0;
   int _liveCoconutStock = 0;
   int _liveTxCount = 0;
+  List<Product> _products = [];
+  String _searchQuery = '';
 
   // ── Warna Tema (Palet Chili POS Clean Green) ───────────────────────────────
   static const Color _bgCanvas = Color(0xFFF4F6F8);
@@ -54,11 +62,11 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
 
   // ── Daftar Kategori (Header Cards Model Chili POS) ─────────────────────────
   final List<_CategoryCardData> _categories = const [
-    _CategoryCardData('Semua Menu', Icons.apps_rounded, '4 Pilihan'),
-    _CategoryCardData('Kelapa Murni', Icons.eco_outlined, '2 Pilihan'),
-    _CategoryCardData('Es Cup Degan', Icons.local_drink_outlined, '2 Pilihan'),
-    _CategoryCardData('Paket Hemat', Icons.card_giftcard_outlined, 'Segera Hadir'),
-    _CategoryCardData('Promo Spesial', Icons.local_offer_outlined, '0 Promo'),
+    _CategoryCardData('Semua Menu', Icons.apps_rounded, '21 Pilihan'),
+    _CategoryCardData('Es Degan Cup', Icons.local_drink_outlined, '10 Pilihan'),
+    _CategoryCardData('Degan Utuh & Kupas', Icons.eco_outlined, '4 Pilihan'),
+    _CategoryCardData('Air Kelapa & Morong', Icons.water_drop_outlined, '4 Pilihan'),
+    _CategoryCardData('Menu Spesial', Icons.star_outline_rounded, '3 Pilihan'),
   ];
 
   // ── Daftar Menu Navigasi Samping (Sidebar) ──────────────────────────────────
@@ -74,20 +82,34 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
   void initState() {
     super.initState();
     _loadLiveStats();
-    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
+    _clockTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      final now = DateTime.now();
+      if (mounted && now.minute != _now.minute) {
+        setState(() => _now = now);
+      }
     });
   }
 
   Future<void> _loadLiveStats() async {
+    await SoundService.instance.loadSettings(force: true);
     final data = await DatabaseHelper.instance.getShiftCashSettlement();
+    final prods = await DatabaseHelper.instance.getProducts();
     if (mounted) {
       setState(() {
+        _notifLowStock = SoundService.instance.notifLowStock;
+        _notifShiftEnd = SoundService.instance.notifShiftEnd;
+        _notifStockIncoming = SoundService.instance.notifStockIncoming;
+        _notifAdminOrders = SoundService.instance.notifAdminOrders;
+        _notifSoundChime = SoundService.instance.notifSoundChime;
+        _soundPreset = SoundService.instance.soundPreset;
+        _ringtoneUri = SoundService.instance.ringtoneUri;
+        _ringtoneTitle = SoundService.instance.ringtoneTitle;
         _liveDepositCash = data['depositCash'] as int? ?? 100000;
         _liveCashRevenue = data['cashRevenue'] as int? ?? 0;
         _liveQrisRevenue = data['qrisRevenue'] as int? ?? 0;
         _liveCoconutStock = data['coconutStock'] as int? ?? 0;
         _liveTxCount = data['transactionCount'] as int? ?? 0;
+        _products = prods;
       });
     }
   }
@@ -329,8 +351,8 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                               _buildCategoryHeaderRow(),
                               const SizedBox(height: 20),
 
-                              // Canvas Katalog Bersih (Sesuai Arahan: Belum membuat daftar menu)
-                              _buildEmptyCatalogCanvas(),
+                              // Katalog Menu 1 Menu 1 Kotak (Foto Papan Menu Asli)
+                              _buildProductGridCatalog(),
                             ],
                           ),
                         ),
@@ -558,18 +580,32 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: _borderColor),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  SizedBox(width: 14),
-                  Icon(Icons.search, size: 17, color: _textMuted),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 14),
+                  const Icon(Icons.search, size: 17, color: _textMuted),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'Cari menu, nota, atau kelapa...',
-                      style: TextStyle(fontSize: 12.5, color: _textMuted),
-                      overflow: TextOverflow.ellipsis,
+                    child: TextField(
+                      onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
+                      style: const TextStyle(fontSize: 12.5, color: _textDark),
+                      decoration: const InputDecoration(
+                        hintText: 'Cari menu Sarjana Degan...',
+                        hintStyle: TextStyle(fontSize: 12.5, color: _textMuted),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
                     ),
                   ),
+                  if (_searchQuery.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 16, color: _textMuted),
+                      onPressed: () => setState(() => _searchQuery = ''),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  const SizedBox(width: 8),
                 ],
               ),
             ),
@@ -730,81 +766,192 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  //  4. EMPTY CATALOG CANVAS (Instruksi User: Jangan buat daftar menu dulu)
+  //  4. KATALOG MENU 1 MENU 1 KOTAK (Foto Asli Papan Menu Sarjana Degan)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildEmptyCatalogCanvas() {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 280),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Badge Kerangka Desain
+  Widget _buildProductGridCatalog() {
+    final filtered = _products.where((p) {
+      final matchesCat = _selectedCategory == 'Semua Menu' || p.category == _selectedCategory;
+      final matchesSearch = _searchQuery.isEmpty ||
+          p.name.toLowerCase().contains(_searchQuery) ||
+          p.category.toLowerCase().contains(_searchQuery);
+      return matchesCat && matchesSearch;
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '$_selectedCategory (${filtered.length} Menu)',
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _textDark),
+            ),
+            ElevatedButton.icon(
+              onPressed: _openPosScreen,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.point_of_sale_rounded, size: 17),
+              label: const Text(
+                'Buka Mesin Kasir POS',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        if (filtered.isEmpty)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: _primaryMint,
-              borderRadius: BorderRadius.circular(999),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: _borderColor),
             ),
-            child: const Text(
-              '🎨 KERANGKA DESAIN DASHBOARD SIAP',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: _primaryDark,
-                letterSpacing: 0.5,
+            child: const Column(
+              children: [
+                Icon(Icons.search_off_rounded, size: 42, color: _textMuted),
+                SizedBox(height: 10),
+                Text(
+                  'Menu tidak ditemukan',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _textDark),
+                ),
+              ],
+            ),
+          )
+        else
+          LayoutBuilder(
+            builder: (ctx, constraints) {
+              final w = constraints.maxWidth;
+              final cols = w >= 1050 ? 5 : (w >= 720 ? 4 : (w >= 480 ? 3 : 2));
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filtered.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: cols,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: 0.78,
+                ),
+                itemBuilder: (ctx, i) {
+                  final prod = filtered[i];
+                  return _buildMenuProductCard(prod);
+                },
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMenuProductCard(Product prod) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _openPosScreen(initialProduct: prod);
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _borderColor),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x07000000),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Foto Menu 1:1
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
+                child: prod.imagePath != null && prod.imagePath!.isNotEmpty
+                    ? Image.asset(
+                        prod.imagePath!,
+                        fit: BoxFit.cover,
+                        cacheWidth: 240,
+                        errorBuilder: (_, __, ___) => _buildFallbackProductArt(prod),
+                      )
+                    : _buildFallbackProductArt(prod),
               ),
             ),
-          ),
-          const SizedBox(height: 14),
-
-          const Text(
-            'Area Katalog Produk & Menu',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: _textDark,
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Text(
-              'Sesuai arahan Mas Dicky, area ini sengaja disiapkan sebagai layout canvas bersih terlebih dahulu untuk mematangkan tata letak dashboard, navigasi samping, kartu kategori, dan modal struk pembayaran.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12.5,
-                color: _textMuted,
-                height: 1.45,
+            // Info Nama + Harga
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    prod.name,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: _textDark,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatRupiah(prod.price),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: _primaryDark,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _primaryMint,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${prod.stock} ${prod.unit}',
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: _primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
 
-          // Tombol Buka Kasir POS
-          ElevatedButton.icon(
-            onPressed: _openPosScreen,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryGreen,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-              elevation: 0,
-            ),
-            icon: const Icon(Icons.point_of_sale_rounded, size: 18),
-            label: const Text(
-              'Buka Mesin Kasir POS & Transaksi',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
+  Widget _buildFallbackProductArt(Product prod) {
+    return Container(
+      color: _primaryMint,
+      child: Center(
+        child: Icon(
+          prod.unit == 'Butir' ? Icons.eco_rounded : Icons.local_drink_rounded,
+          size: 42,
+          color: _primaryDark,
+        ),
       ),
     );
   }
@@ -880,7 +1027,7 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
     );
   }
 
-  void _openPosScreen() async {
+  void _openPosScreen({Product? initialProduct}) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -888,6 +1035,7 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
           branchName: widget.branchName,
           shiftName: widget.shiftName,
           isOwner: widget.isOwner,
+          initialProduct: initialProduct,
         ),
       ),
     );
@@ -1316,6 +1464,115 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                       },
                     ),
 
+                    const SizedBox(height: 10),
+
+                    // Pemilih Nada Dering & Suara Kasir
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _borderColor),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.music_note_rounded, size: 18, color: _primaryDark),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Pilih Nada Dering & Suara',
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _textDark),
+                                ),
+                              ),
+                              Text(
+                                _soundPreset == 'custom'
+                                    ? _ringtoneTitle
+                                    : (_soundPreset == 'alarm'
+                                        ? 'Alarm Tablet'
+                                        : (_soundPreset == 'notification' ? 'Notif Standar' : 'Ting! Kasir')),
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _primaryDark),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              ChoiceChip(
+                                label: const Text('Ting! Kasir', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                                selected: _soundPreset == 'chime',
+                                selectedColor: _primaryMint,
+                                onSelected: (_) {
+                                  setState(() => _soundPreset = 'chime');
+                                  setModalState(() {});
+                                  SoundService.instance.playSelectedSound(overridePreset: 'chime');
+                                },
+                              ),
+                              ChoiceChip(
+                                label: const Text('Notif Standar', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                                selected: _soundPreset == 'notification',
+                                selectedColor: _primaryMint,
+                                onSelected: (_) {
+                                  setState(() => _soundPreset = 'notification');
+                                  setModalState(() {});
+                                  SoundService.instance.playSelectedSound(overridePreset: 'notification');
+                                },
+                              ),
+                              ChoiceChip(
+                                label: const Text('Alarm', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                                selected: _soundPreset == 'alarm',
+                                selectedColor: _primaryMint,
+                                onSelected: (_) {
+                                  setState(() => _soundPreset = 'alarm');
+                                  setModalState(() {});
+                                  SoundService.instance.playSelectedSound(overridePreset: 'alarm');
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final picked = await SoundService.instance.pickSystemRingtone();
+                                if (picked != null) {
+                                  setState(() {
+                                    _soundPreset = 'custom';
+                                    _ringtoneUri = picked['uri'] ?? '';
+                                    _ringtoneTitle = picked['title'] ?? 'Nada Dering Terpilih';
+                                  });
+                                  setModalState(() {});
+                                  SoundService.instance.playSelectedSound(
+                                    overridePreset: 'custom',
+                                    overrideUri: _ringtoneUri,
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.library_music_rounded, size: 16),
+                              label: Text(
+                                _soundPreset == 'custom'
+                                    ? 'Ganti Nada: $_ringtoneTitle'
+                                    : 'Pilih Nada Dering / MP3 dari Tablet...',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _primaryDark,
+                                side: const BorderSide(color: Color(0xFF86EFAC)),
+                                backgroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     const SizedBox(height: 12),
                     const Divider(color: Color(0xFFE2E8F0)),
                     const SizedBox(height: 12),
@@ -1327,6 +1584,10 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
+                              SoundService.instance.playSelectedSound(
+                                overridePreset: _soundPreset,
+                                overrideUri: _ringtoneUri,
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   backgroundColor: const Color(0xFF0F172A),
@@ -1379,15 +1640,27 @@ class _CashierMenuScreenState extends State<CashierMenuScreen> {
                         // Tombol Simpan
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('✅ Pengaturan notifikasi berhasil disimpan dan aktif!'),
-                                  backgroundColor: _primaryDark,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
+                            onPressed: () async {
+                              await SoundService.instance.saveSettings(
+                                lowStock: _notifLowStock,
+                                shiftEnd: _notifShiftEnd,
+                                stockIncoming: _notifStockIncoming,
+                                adminOrders: _notifAdminOrders,
+                                soundChime: _notifSoundChime,
+                                preset: _soundPreset,
+                                uri: _ringtoneUri,
+                                title: _ringtoneTitle,
                               );
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('✅ Pengaturan notifikasi & nada dering tersimpan permanen!'),
+                                    backgroundColor: _primaryDark,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryGreen,
